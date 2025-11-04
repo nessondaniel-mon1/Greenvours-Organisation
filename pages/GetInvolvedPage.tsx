@@ -2,44 +2,142 @@ import React, { useState } from 'react';
 
 type Tab = 'donate' | 'volunteer' | 'partner';
 
-const DonateForm: React.FC = () => (
-    <div className="space-y-6">
-        <div>
-            <label className="block text-lg font-semibold text-gray-200 mb-2">Choose Amount</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {['50,000', '100,000', '250,000', '500,000'].map(amount => (
-                     <button key={amount} className="p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-accent hover:border-brand-accent hover:text-brand-green transition">UGX {amount}</button>
-                ))}
-            </div>
-        </div>
-        <div>
-            <label htmlFor="custom-amount" className="block text-base font-medium text-gray-200 mb-2">Or Enter a Custom Amount</label>
-            <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-400 text-lg font-semibold">UGX</span>
+const DonateForm: React.FC = () => {
+    const [selectedAmount, setSelectedAmount] = useState<string | null>(null);
+    const [customAmount, setCustomAmount] = useState('');
+    const [frequency, setFrequency] = useState<'one-time' | 'monthly'>('one-time');
+    const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+
+    const amounts = ['50000', '100000', '250000', '500000'];
+    const currentAmount = selectedAmount || customAmount;
+    const isAmountSelected = !!currentAmount && parseFloat(currentAmount) > 0;
+
+    const handleAmountClick = (amount: string) => {
+        setSelectedAmount(amount);
+        setCustomAmount('');
+    };
+
+    const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        setCustomAmount(value);
+        setSelectedAmount(null);
+    };
+    
+    const handleProceed = () => {
+        if (isAmountSelected) {
+            setShowPaymentMethods(true);
+        }
+    };
+
+    if (showPaymentMethods) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-bold text-white">Complete Your Donation</h3>
+                    <button onClick={() => setShowPaymentMethods(false)} className="text-sm text-gray-400 hover:text-white">&larr; Back</button>
                 </div>
-                <input 
-                    type="text"
-                    inputMode="decimal"
-                    id="custom-amount" 
-                    className="focus:ring-brand-accent focus:border-brand-accent block w-full pl-16 pr-4 py-3 text-lg font-bold text-white bg-gray-700 border-gray-600 rounded-lg" 
-                    placeholder="e.g., 20000"
-                />
+                <div className="bg-gray-700 p-4 rounded-lg text-center">
+                    <p className="text-gray-300">You are donating</p>
+                    <p className="text-3xl font-bold text-brand-accent my-1">
+                        UGX {parseFloat(currentAmount!).toLocaleString()}
+                    </p>
+                    <p className="text-gray-300 capitalize">{frequency.replace('-', ' ')}</p>
+                </div>
+
+                <div>
+                    <label className="block text-lg font-semibold text-gray-200 mb-3">Choose Payment Method</label>
+                    <div className="space-y-4">
+                        <button className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                            Mobile Money
+                        </button>
+                         <button className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                            Credit / Debit Card
+                        </button>
+                    </div>
+                </div>
+                <p className="text-xs text-center text-gray-400">Secure payments processed by our partners.</p>
             </div>
-        </div>
-        <div>
-            <label className="block text-lg font-semibold text-gray-200 mb-2">Donation Frequency</label>
-            <div className="flex gap-4">
-                 <button className="flex-1 p-3 border rounded-lg text-center font-semibold text-brand-green bg-brand-accent border-brand-accent">One-Time</button>
-                 <button className="flex-1 p-3 border border-gray-600 rounded-lg text-center font-semibold text-gray-300 hover:bg-gray-700 transition">Monthly</button>
+        );
+    }
+    
+    return (
+        <div className="space-y-6">
+            <div>
+                <label className="block text-lg font-semibold text-gray-200 mb-2">Choose Amount</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {amounts.map(amount => {
+                        const isSelected = selectedAmount === amount;
+                        return (
+                             <button 
+                                key={amount} 
+                                onClick={() => handleAmountClick(amount)}
+                                className={`p-4 border rounded-lg text-center font-bold text-lg transition ${
+                                    isSelected 
+                                        ? 'bg-brand-accent border-brand-accent text-brand-green' 
+                                        : 'border-gray-600 text-white hover:bg-gray-700'
+                                }`}
+                            >
+                                UGX {parseInt(amount).toLocaleString()}
+                            </button>
+                        )
+                    })}
+                </div>
             </div>
+            <div>
+                <label htmlFor="custom-amount" className="block text-base font-medium text-gray-200 mb-2">Or Enter a Custom Amount</label>
+                <div className="mt-1 relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-gray-400 text-lg font-semibold">UGX</span>
+                    </div>
+                    <input 
+                        type="text"
+                        inputMode="numeric"
+                        id="custom-amount" 
+                        value={customAmount}
+                        onChange={handleCustomAmountChange}
+                        className="focus:ring-brand-accent focus:border-brand-accent block w-full pl-16 pr-4 py-3 text-lg font-bold text-white bg-gray-700 border-gray-600 rounded-lg" 
+                        placeholder="e.g., 20000"
+                    />
+                </div>
+            </div>
+            <div>
+                <label className="block text-lg font-semibold text-gray-200 mb-2">Donation Frequency</label>
+                <div className="flex gap-4">
+                     <button 
+                        onClick={() => setFrequency('one-time')}
+                        className={`flex-1 p-3 border rounded-lg text-center font-semibold transition ${
+                            frequency === 'one-time' 
+                                ? 'bg-brand-accent border-brand-accent text-brand-green' 
+                                : 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                        }`}
+                     >
+                        One-Time
+                     </button>
+                     <button 
+                        onClick={() => setFrequency('monthly')}
+                        className={`flex-1 p-3 border rounded-lg text-center font-semibold transition ${
+                            frequency === 'monthly' 
+                                ? 'bg-brand-accent border-brand-accent text-brand-green' 
+                                : 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                        }`}
+                     >
+                        Monthly
+                    </button>
+                </div>
+            </div>
+            <button 
+                onClick={handleProceed}
+                disabled={!isAmountSelected}
+                className="w-full bg-brand-green text-white font-bold py-4 px-4 rounded-lg hover:bg-brand-light-green transition text-xl disabled:bg-gray-600 disabled:cursor-not-allowed"
+            >
+                Proceed to Payment
+            </button>
+            <p className="text-xs text-center text-gray-400">100% of your donation goes to our programs.</p>
         </div>
-        <button className="w-full bg-brand-green text-white font-bold py-4 px-4 rounded-lg hover:bg-brand-light-green transition text-xl">
-            Donate Now
-        </button>
-        <p className="text-xs text-center text-gray-400">Secure donation powered by Stripe. 100% of your donation goes to our programs.</p>
-    </div>
-);
+    );
+};
 
 const VolunteerForm: React.FC = () => (
     <div className="space-y-6">
