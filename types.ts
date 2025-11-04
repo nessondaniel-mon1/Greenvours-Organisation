@@ -1,8 +1,8 @@
 
-export type Page = 'home' | 'experiences' | 'mission' | 'conservation' | 'relief' | 'involved' | 'blog' | 'contact' | 'tour-detail';
+export type Page = 'home' | 'experiences' | 'mission' | 'conservation' | 'relief' | 'involved' | 'blog' | 'contact' | 'tour-detail' | 'admin' | 'project-detail';
 
 export interface Tour {
-  id: number;
+  id: number | string;
   title: string;
   region: string;
   activity: 'Hiking' | 'Birdwatching' | 'Cultural' | 'Wellness' | 'Wildlife';
@@ -17,7 +17,7 @@ export interface Tour {
 }
 
 export interface NewsArticle {
-  id: number;
+  id: number | string;
   title: string;
   excerpt: string;
   imageUrl: string;
@@ -26,7 +26,7 @@ export interface NewsArticle {
 }
 
 export interface TeamMember {
-    id: number;
+    id: number | string;
     name: string;
     role: string;
     bio: string;
@@ -34,9 +34,13 @@ export interface TeamMember {
 }
 
 export interface Project {
-    id: number;
+    id: number | string;
     name: string;
     location: string;
-    description: string;
+    description: string; // Short description
+    longDescription: string; // Detailed description
     imageUrl: string;
+    goals: string[];
+    impactStats: { value: string; label: string }[];
+    galleryImages: string[];
 }

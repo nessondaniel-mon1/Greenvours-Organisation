@@ -1,13 +1,16 @@
-import React from 'react';
-import { TeamMember } from '../types';
 
-const teamMembers: TeamMember[] = [
-    { id: 1, name: 'Dr. Grace Nakato', role: 'Founder & Lead Conservationist', bio: 'With a Ph.D. in Environmental Science from Makerere University, Grace founded Greenvours to connect responsible tourism with tangible conservation in Uganda.', imageUrl: 'https://picsum.photos/seed/ugteam1/400/400' },
-    { id: 2, name: 'David Mwesige', role: 'Head of Eco-Tours', bio: 'An experienced guide with 15+ years leading safaris, David ensures all our trips are safe, authentic, and respectful of Uganda\'s natural heritage.', imageUrl: 'https://picsum.photos/seed/ugteam2/400/400' },
-    { id: 3, name: 'Sarah Achen', role: 'Director of Community Aid', bio: 'Sarah coordinates our relief efforts, working tirelessly with local leaders in regions like Karamoja to deliver aid where it\'s needed most.', imageUrl: 'https://picsum.photos/seed/ugteam3/400/400' },
-];
+import React, { useState, useEffect } from 'react';
+import { TeamMember } from '../types';
+import { getTeam } from '../services/dataService';
+
 
 const MissionPage: React.FC = () => {
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+    useEffect(() => {
+        setTeamMembers(getTeam());
+    }, []);
+
     return (
         <div className="bg-gray-900">
             <div className="bg-brand-light-green text-white py-20">

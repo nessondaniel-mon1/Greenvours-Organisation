@@ -1,13 +1,19 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Project } from '../types';
+import { getProjects } from '../services/dataService';
 
-const projects: Project[] = [
-    { id: 1, name: 'Shoebill Stork Conservation', location: 'Mabamba Bay, Lake Victoria', description: 'Working with local fishing communities to protect the nesting sites of the iconic shoebill stork and reduce human-wildlife conflict.', imageUrl: 'https://picsum.photos/seed/ugproject1/600/400' },
-    { id: 2, name: 'Kibale Forest Reforestation', location: 'Kibale, Western Uganda', description: 'Establishing tree nurseries and reforesting degraded areas bordering Kibale National Park to expand the corridor for chimpanzees and other primates.', imageUrl: 'https://picsum.photos/seed/ugproject2/600/400' },
-    { id: 3, name: 'Mountain Gorilla Habitat Protection', location: 'Bwindi Impenetrable National Park', description: 'Funding anti-poaching patrols and community education programs to ensure the long-term survival of the mountain gorilla population.', imageUrl: 'https://picsum.photos/seed/ugproject3/600/400' },
-];
+interface ConservationPageProps {
+    viewProjectDetail: (project: Project) => void;
+}
 
-const ConservationPage: React.FC = () => {
+const ConservationPage: React.FC<ConservationPageProps> = ({ viewProjectDetail }) => {
+    const [projects, setProjects] = useState<Project[]>([]);
+
+    useEffect(() => {
+        setProjects(getProjects());
+    }, []);
+
     return (
         <div className="bg-gray-900">
             <div className="bg-brand-green text-white py-20">
@@ -33,7 +39,7 @@ const ConservationPage: React.FC = () => {
                                     <p className="text-brand-accent font-semibold">{project.location}</p>
                                     <h3 className="text-2xl font-bold text-white mt-1 mb-3">{project.name}</h3>
                                     <p className="text-gray-300 leading-relaxed">{project.description}</p>
-                                    <button className="mt-4 text-brand-accent font-semibold hover:text-yellow-300 transition">Learn More &rarr;</button>
+                                    <button onClick={() => viewProjectDetail(project)} className="mt-4 text-brand-accent font-semibold hover:text-yellow-300 transition">Learn More &rarr;</button>
                                 </div>
                             </div>
                         ))}

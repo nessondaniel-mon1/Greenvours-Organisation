@@ -1,15 +1,15 @@
-import React from 'react';
-import { NewsArticle } from '../types';
 
-const blogPosts: NewsArticle[] = [
-    { id: 1, title: 'Major Reforestation Drive in Budongo Forest', excerpt: 'We planted over 10,000 native saplings this past quarter, thanks to your support. This effort is crucial for protecting chimpanzee habitats.', imageUrl: 'https://picsum.photos/seed/ugnews1/800/500', category: 'Conservation', date: 'October 28, 2023' },
-    { id: 2, title: 'Urgent Flood Relief in Kasese District', excerpt: 'Our team is on the ground providing essential supplies to families affected by the recent floods from River Nyamwamba.', imageUrl: 'https://picsum.photos/seed/ugnews2/800/500', category: 'Relief Update', date: 'October 25, 2023' },
-    { id: 3, title: 'Discovering the Beauty of Sipi Falls', excerpt: 'A look back at our latest eco-tour, balancing adventure with responsible travel. The breathtaking landscapes reminded us all what we are fighting to protect.', imageUrl: 'https://picsum.photos/seed/ugnews3/800/500', category: 'Travel', date: 'October 22, 2023' },
-    { id: 4, title: 'The Importance of Ranger Patrols', excerpt: 'Learn how our funding supports the brave rangers of Uganda Wildlife Authority who protect our national parks from poachers and illegal activity.', imageUrl: 'https://picsum.photos/seed/ugblog4/800/500', category: 'Conservation', date: 'October 15, 2023' },
-    { id: 5, title: 'A Day in the Life of a Kampala Volunteer', excerpt: 'An interview with one of our dedicated volunteers, sharing their experience sorting supplies and coordinating logistics for our relief efforts.', imageUrl: 'https://picsum.photos/seed/ugblog5/800/500', category: 'Relief Update', date: 'October 10, 2023' },
-];
+import React, { useState, useEffect } from 'react';
+import { NewsArticle } from '../types';
+import { getNews } from '../services/dataService';
 
 const BlogPage: React.FC = () => {
+    const [blogPosts, setBlogPosts] = useState<NewsArticle[]>([]);
+
+    useEffect(() => {
+        setBlogPosts(getNews());
+    }, []);
+
     return (
         <div className="bg-gray-900 min-h-screen">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">

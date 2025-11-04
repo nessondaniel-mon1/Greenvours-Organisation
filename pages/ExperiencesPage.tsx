@@ -1,14 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { Tour } from '../types';
 
-const toursData: Tour[] = [
-    { id: 1, title: 'Bwindi Gorilla Trek', region: 'Western Uganda', activity: 'Wildlife', duration: 3, difficulty: 'Challenging', price: 2800000, imageUrl: 'https://picsum.photos/seed/ugtour1/600/400', description: 'An unforgettable encounter with mountain gorillas.', itinerary: [], sustainabilityFeatures: [], guide: { name: '', bio: '', imageUrl: '' }},
-    { id: 2, title: 'Rwenzori Mountain Climb', region: 'Western Uganda', activity: 'Hiking', duration: 9, difficulty: 'Challenging', price: 4500000, imageUrl: 'https://picsum.photos/seed/ugtour2/600/400', description: 'Conquer the Mountains of the Moon.', itinerary: [], sustainabilityFeatures: [], guide: { name: '', bio: '', imageUrl: '' }},
-    { id: 3, title: 'Mabamba Swamp Shoebill Tour', region: 'Central Uganda', activity: 'Birdwatching', duration: 1, difficulty: 'Easy', price: 700000, imageUrl: 'https://picsum.photos/seed/ugtour3/600/400', description: 'Spot the elusive and prehistoric shoebill stork.', itinerary: [], sustainabilityFeatures: [], guide: { name: '', bio: '', imageUrl: '' }},
-    { id: 4, title: 'Murchison Falls Safari', region: 'Northern Uganda', activity: 'Wildlife', duration: 4, difficulty: 'Moderate', price: 3500000, imageUrl: 'https://picsum.photos/seed/ugtour4/600/400', description: 'Experience the world\'s most powerful waterfall and diverse wildlife.', itinerary: [], sustainabilityFeatures: [], guide: { name: '', bio: '', imageUrl: '' }},
-    { id: 5, title: 'Sipi Falls Wellness Retreat', region: 'Eastern Uganda', activity: 'Wellness', duration: 3, difficulty: 'Easy', price: 1800000, imageUrl: 'https://picsum.photos/seed/ugtour5/600/400', description: 'Yoga and meditation by stunning waterfalls.', itinerary: [], sustainabilityFeatures: [], guide: { name: '', bio: '', imageUrl: '' }},
-    { id: 6, title: 'Queen Elizabeth Park Discovery', region: 'Western Uganda', activity: 'Wildlife', duration: 5, difficulty: 'Moderate', price: 4000000, imageUrl: 'https://picsum.photos/seed/ugtour6/600/400', description: 'Home to tree-climbing lions and the Kazinga Channel.', itinerary: [], sustainabilityFeatures: [], guide: { name: '', bio: '', imageUrl: '' }},
-];
+import React, { useState, useMemo, useEffect } from 'react';
+import { Tour } from '../types';
+import { getTours } from '../services/dataService';
+
 
 interface TourCardProps {
   tour: Tour;
@@ -51,12 +45,17 @@ interface ExperiencesPageProps {
 
 
 const ExperiencesPage: React.FC<ExperiencesPageProps> = ({ viewTourDetail }) => {
+    const [toursData, setToursData] = useState<Tour[]>([]);
     const [filters, setFilters] = useState({
         region: 'all',
         activity: 'all',
         difficulty: 'all',
     });
     const [isFilterVisible, setIsFilterVisible] = useState(false);
+
+    useEffect(() => {
+        setToursData(getTours());
+    }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -69,7 +68,7 @@ const ExperiencesPage: React.FC<ExperiencesPageProps> = ({ viewTourDetail }) => 
                    (filters.activity === 'all' || tour.activity === filters.activity) &&
                    (filters.difficulty === 'all' || tour.difficulty === filters.difficulty);
         });
-    }, [filters]);
+    }, [filters, toursData]);
 
     return (
         <div className="bg-gray-900 min-h-screen">

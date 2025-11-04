@@ -1,20 +1,7 @@
-import React from 'react';
-import { Tour } from '../types';
 
-const fullTourData: { [id: number]: Tour } = {
-    1: { 
-        id: 1, title: 'Bwindi Gorilla Trek', region: 'Western Uganda', activity: 'Wildlife', duration: 3, difficulty: 'Challenging', price: 2800000, imageUrl: 'https://picsum.photos/seed/ugtour1/1200/600', 
-        description: 'Embark on a once-in-a-lifetime journey into the heart of Bwindi Impenetrable Forest to witness a family of mountain gorillas in their natural habitat. This profound experience supports the conservation of this critically endangered species and benefits local communities.', 
-        itinerary: [
-            { day: 1, title: 'Transfer to Bwindi', description: 'Depart from Kampala/Entebbe and travel southwest to the edge of the Bwindi Impenetrable Forest, enjoying scenic views of the Ugandan countryside.' },
-            { day: 2, title: 'The Gorilla Trek', description: 'After a briefing from UWA rangers, venture into the dense forest. The trek can take several hours, but the reward is an unforgettable hour spent observing the gorillas.' },
-            { day: 3, title: 'Community Walk & Return Journey', description: 'Visit a local Batwa community to learn about their culture before starting your journey back to Kampala, filled with incredible memories.' }
-        ], 
-        sustainabilityFeatures: ['Gorilla permits fund national park conservation', 'Employment of local guides and porters', 'Support for local community schools and clinics', 'Eco-lodge accommodations with minimal footprint'], 
-        guide: { name: 'Amos Wambede', bio: 'Amos was born and raised near Bwindi and has been a certified UWA guide for over 15 years. His passion for wildlife conservation is infectious, and he has an incredible talent for tracking gorilla families.', imageUrl: 'https://picsum.photos/seed/ugguide1/300/300' }
-    },
-    // Add full data for other tours as needed
-};
+import React, { useState, useEffect } from 'react';
+import { Tour } from '../types';
+import { getTours } from '../services/dataService';
 
 interface TourDetailPageProps {
   tour: Tour;
@@ -22,7 +9,17 @@ interface TourDetailPageProps {
 }
 
 const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
-    const detailedTour = fullTourData[tour.id] || tour;
+    const [detailedTour, setDetailedTour] = useState<Tour | null>(null);
+
+    useEffect(() => {
+        const allTours = getTours();
+        const foundTour = allTours.find(t => t.id === tour.id);
+        setDetailedTour(foundTour || tour);
+    }, [tour]);
+
+    if (!detailedTour) {
+        return <div className="text-center py-20 text-white">Loading tour details...</div>;
+    }
 
     return (
         <div className="bg-gray-900">
@@ -46,7 +43,7 @@ const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
                         
                         <h2 className="text-3xl font-bold text-white mb-6">Itinerary</h2>
                         <div className="space-y-6 border-l-2 border-brand-accent pl-6">
-                            {detailedTour.itinerary.map(item => (
+                            {detailedTour.itinerary && detailedTour.itinerary.map(item => (
                                 <div key={item.day}>
                                     <div className="flex items-center">
                                         <div className="bg-brand-accent text-brand-green rounded-full h-8 w-8 flex items-center justify-center font-bold -ml-10">
@@ -88,7 +85,7 @@ const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
 
                             <h4 className="text-xl font-semibold text-white mt-8 mb-2">Sustainability Impact</h4>
                              <ul className="mt-2 space-y-1 text-sm text-gray-400 list-disc list-inside">
-                                {detailedTour.sustainabilityFeatures.map((feature, index) => <li key={index}>{feature}</li>)}
+                                {detailedTour.sustainabilityFeatures && detailedTour.sustainabilityFeatures.map((feature, index) => <li key={index}>{feature}</li>)}
                             </ul>
                         </div>
                     </div>

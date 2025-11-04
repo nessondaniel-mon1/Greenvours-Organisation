@@ -46,7 +46,7 @@ const Footer: React.FC<FooterProps> = ({ navigate }) => {
         <div className="mt-12 border-t border-gray-700 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm">
           <p className="text-gray-400">&copy; {new Date().getFullYear()} Greenvours Organisation. All Rights Reserved.</p>
           <div className="flex space-x-4 mt-4 sm:mt-0">
-            {/* Social Icons Placeholder */}
+             <button onClick={() => navigate('admin')} className="text-gray-400 hover:text-brand-accent transition text-xs">Admin</button>
           </div>
         </div>
       </div>

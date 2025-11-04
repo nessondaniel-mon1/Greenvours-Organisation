@@ -1,16 +1,12 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Page, NewsArticle } from '../types';
+import { getNews } from '../services/dataService';
+
 
 interface HomePageProps {
   navigate: (page: Page) => void;
 }
-
-const newsData: NewsArticle[] = [
-    { id: 1, title: 'Major Reforestation Drive in Budongo Forest', excerpt: 'We planted over 10,000 native saplings this past quarter, protecting vital chimpanzee habitats.', imageUrl: 'https://picsum.photos/seed/ugnews1/600/400', category: 'Conservation', date: 'Oct 28, 2023' },
-    { id: 2, title: 'Urgent Flood Relief in Kasese District', excerpt: 'Our team is on the ground providing essential supplies to families affected by the recent floods from River Nyamwamba.', imageUrl: 'https://picsum.photos/seed/ugnews2/600/400', category: 'Relief Update', date: 'Oct 25, 2023' },
-    { id: 3, title: 'Discovering the Beauty of Sipi Falls', excerpt: 'A look back at our latest eco-tour, balancing adventure with responsible travel in Eastern Uganda.', imageUrl: 'https://picsum.photos/seed/ugnews3/600/400', category: 'Travel', date: 'Oct 22, 2023' },
-];
-
 
 const HeroSection: React.FC<HomePageProps> = ({ navigate }) => (
   <div className="relative h-[calc(100vh-80px)] min-h-[600px] flex items-center justify-center text-white">
@@ -74,29 +70,37 @@ const PillarsSection: React.FC<HomePageProps> = ({ navigate }) => (
   </section>
 );
 
-const NewsSection: React.FC<HomePageProps> = ({ navigate }) => (
-    <section className="py-16 bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white">Latest News & Impact</h2>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">See how your support is making a difference on the ground.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {newsData.map(article => (
-                <div key={article.id} className="bg-gray-800 rounded-lg shadow-lg overflow-hidden group">
-                    <img src={article.imageUrl} alt={article.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"/>
-                    <div className="p-6">
-                        <p className="text-sm text-brand-accent font-semibold">{article.category}</p>
-                        <h3 className="text-xl font-bold text-white mt-2 mb-2">{article.title}</h3>
-                        <p className="text-gray-300 text-sm mb-4">{article.excerpt}</p>
-                        <button onClick={() => navigate('blog')} className="font-semibold text-brand-accent hover:text-yellow-300 transition">Read More &rarr;</button>
+const NewsSection: React.FC<HomePageProps> = ({ navigate }) => {
+    const [newsData, setNewsData] = useState<NewsArticle[]>([]);
+
+    useEffect(() => {
+        setNewsData(getNews().slice(0, 3)); // Get latest 3 articles
+    }, []);
+
+    return (
+        <section className="py-16 bg-gray-900">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white">Latest News & Impact</h2>
+              <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">See how your support is making a difference on the ground.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {newsData.map(article => (
+                    <div key={article.id} className="bg-gray-800 rounded-lg shadow-lg overflow-hidden group">
+                        <img src={article.imageUrl} alt={article.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"/>
+                        <div className="p-6">
+                            <p className="text-sm text-brand-accent font-semibold">{article.category}</p>
+                            <h3 className="text-xl font-bold text-white mt-2 mb-2">{article.title}</h3>
+                            <p className="text-gray-300 text-sm mb-4">{article.excerpt}</p>
+                            <button onClick={() => navigate('blog')} className="font-semibold text-brand-accent hover:text-yellow-300 transition">Read More &rarr;</button>
+                        </div>
                     </div>
-                </div>
-            ))}
-        </div>
-      </div>
-    </section>
-);
+                ))}
+            </div>
+          </div>
+        </section>
+    );
+};
 
 const HomePage: React.FC<HomePageProps> = ({ navigate }) => {
   return (
