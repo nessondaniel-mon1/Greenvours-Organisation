@@ -1,10 +1,15 @@
-
 import React, { useState } from 'react';
 import { Page } from '../types';
+// FIX: Update Firebase imports for v8 compatibility to resolve module export errors.
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import { auth } from '../services/firebase';
 
 interface HeaderProps {
   navigate: (page: Page) => void;
   currentPage: Page;
+  // FIX: Use firebase.User type for v8 compatibility.
+  user: firebase.User | null;
 }
 
 const NavLink: React.FC<{ page: Page; currentPage: Page; navigate: (page: Page) => void; children: React.ReactNode }> = ({ page, currentPage, navigate, children }) => {
@@ -21,8 +26,19 @@ const NavLink: React.FC<{ page: Page; currentPage: Page; navigate: (page: Page) 
   );
 };
 
-const Header: React.FC<HeaderProps> = ({ navigate, currentPage }) => {
+const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      // FIX: Use auth.signOut() method for v8 compatibility.
+      await auth.signOut();
+      navigate('home');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+      alert('Failed to sign out.');
+    }
+  };
 
   const navItems: { page: Page; label: string }[] = [
     { page: 'home', label: 'Home' },
@@ -51,12 +67,24 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage }) => {
             ))}
           </nav>
           <div className="hidden md:block">
-            <button
-              onClick={() => navigate('involved')}
-              className="bg-brand-accent text-brand-green font-bold py-2 px-4 rounded-full hover:bg-opacity-90 transition-transform duration-200 hover:scale-105"
-            >
-              Get Involved
-            </button>
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-white text-sm">Welcome, {user.displayName || user.email}</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-gray-600 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-700 transition-transform duration-200 hover:scale-105"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('involved')}
+                className="bg-brand-accent text-brand-green font-bold py-2 px-4 rounded-full hover:bg-opacity-90 transition-transform duration-200 hover:scale-105"
+              >
+                Get Involved
+              </button>
+            )}
           </div>
           <div className="md:hidden">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white focus:outline-none">
@@ -86,15 +114,30 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage }) => {
                 {item.label}
               </button>
             ))}
-            <button
-              onClick={() => {
-                navigate('involved');
-                setIsMenuOpen(false);
-              }}
-              className="bg-brand-accent text-brand-green font-bold py-2 px-4 rounded-full hover:bg-opacity-90 transition w-full mt-4"
-            >
-              Get Involved
-            </button>
+            {user ? (
+               <div className="px-3 py-2">
+                 <p className="text-white text-base font-medium mb-2">Welcome, {user.displayName || user.email}</p>
+                 <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="bg-gray-600 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-700 transition w-full mt-2"
+                  >
+                    Logout
+                  </button>
+               </div>
+            ) : (
+              <button
+                onClick={() => {
+                  navigate('involved');
+                  setIsMenuOpen(false);
+                }}
+                className="bg-brand-accent text-brand-green font-bold py-2 px-4 rounded-full hover:bg-opacity-90 transition w-full mt-4"
+              >
+                Get Involved
+              </button>
+            )}
           </div>
         </div>
       )}

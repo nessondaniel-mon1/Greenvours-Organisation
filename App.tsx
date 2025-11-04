@@ -16,6 +16,10 @@ import AdminPage from './pages/AdminPage';
 import PasswordModal from './components/PasswordModal';
 import { initializeData } from './services/dataService';
 import EducationProgramDetailPage from './pages/EducationProgramDetailPage';
+import { auth } from './services/firebase';
+// FIX: Update Firebase imports for v8 compatibility to resolve module export errors.
+import firebase from 'firebase/app';
+import 'firebase/auth';
 
 
 const App: React.FC = () => {
@@ -25,9 +29,18 @@ const App: React.FC = () => {
   const [selectedProgram, setSelectedProgram] = useState<EducationProgram | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  // FIX: Use firebase.User type for v8 compatibility.
+  const [user, setUser] = useState<firebase.User | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
     initializeData();
+    // FIX: Use auth.onAuthStateChanged method for v8 compatibility.
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setAuthInitialized(true);
+    });
+    return () => unsubscribe();
   }, []);
 
   const performNavigation = useCallback((targetPage: Page) => {
@@ -118,13 +131,21 @@ const App: React.FC = () => {
     }
   };
 
+  if (!authInitialized) {
+    return (
+      <div className="bg-gray-900 h-screen flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-900 text-gray-300 font-sans">
-      <Header navigate={navigate} currentPage={currentPage} />
+      <Header navigate={navigate} currentPage={currentPage} user={user} />
       <main className="pt-20">
         {renderPage()}
       </main>
-      <Footer navigate={navigate}/>
+      <Footer navigate={navigate} user={user} />
       {isPasswordModalVisible && (
         <PasswordModal 
           onSubmit={handlePasswordSubmit}
