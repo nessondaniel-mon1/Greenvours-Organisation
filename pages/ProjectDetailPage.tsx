@@ -74,15 +74,15 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ project, onBack }
                     <div className="lg:col-span-1">
                         <div className="bg-gray-800 p-6 rounded-lg shadow-md sticky top-28">
                             <h3 className="text-2xl font-bold text-white mb-6">Impact Snapshot</h3>
-                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-8">
                                 {project.impactStats.map(stat => (
-                                    <div key={stat.label} className="flex items-center sm:block sm:text-center lg:flex lg:text-left">
-                                        <div className="flex-shrink-0 bg-brand-green h-12 w-12 sm:h-16 sm:w-16 rounded-lg flex items-center justify-center mr-4 sm:mr-0 sm:mb-3 sm:mx-auto lg:mr-4 lg:mb-0">
+                                    <div key={stat.label} className="text-center">
+                                        <div className="bg-brand-green h-14 w-14 rounded-lg flex items-center justify-center mx-auto mb-3">
                                             {getIconForStat(stat.label)}
                                         </div>
                                         <div>
-                                            <p className="text-2xl sm:text-3xl font-bold text-white">{stat.value}</p>
-                                            <p className="text-sm text-gray-400">{stat.label}</p>
+                                            <p className="text-xl sm:text-2xl font-bold text-white">{stat.value}</p>
+                                            <p className="text-sm text-gray-400 mt-1">{stat.label}</p>
                                         </div>
                                     </div>
                                 ))}

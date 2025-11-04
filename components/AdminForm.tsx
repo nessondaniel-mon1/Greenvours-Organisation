@@ -11,13 +11,46 @@ interface AdminFormProps {
 const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) => {
     const [formData, setFormData] = useState<any>({});
 
+    const toInputDate = (dateString: string | undefined): string => {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } catch (e) {
+            return '';
+        }
+    };
+
+    const fromInputDate = (dateString: string | undefined): string => {
+        const fallbackDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        if (!dateString) return fallbackDate;
+        try {
+            const parts = dateString.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            const date = new Date(year, month, day);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch (e) {
+            return fallbackDate;
+        }
+    };
+
     useEffect(() => {
-        const initialData = JSON.parse(JSON.stringify(item || {})); // Deep copy to avoid mutation issues
+        const initialData = JSON.parse(JSON.stringify(item || {}));
         
         if (type === 'projects') {
             initialData.goals = initialData.goals || [];
             initialData.impactStats = initialData.impactStats || [];
             initialData.galleryImages = initialData.galleryImages || [];
+        }
+
+        if (type === 'news') {
+             initialData.date = toInputDate(initialData.date);
         }
 
         if (!initialData.imageUrl) {
@@ -47,6 +80,9 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         if (type === 'projects' && typeof finalData.goals === 'string') {
             finalData.goals = finalData.goals.split('\n').filter(g => g.trim() !== '');
         }
+        if (type === 'news' && finalData.date) {
+            finalData.date = fromInputDate(finalData.date);
+        }
         onSave(finalData);
     };
 
@@ -61,21 +97,21 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         setFormData({ ...formData, [fieldName]: currentArray.filter((_, i) => i !== index) });
     };
 
-    const handleArrayItemChange = (
+    const handleImpactStatChange = (
         e: React.ChangeEvent<HTMLInputElement>,
         index: number,
-        fieldName: 'impactStats' | 'galleryImages',
-        subField?: 'value' | 'label'
+        subField: 'value' | 'label'
     ) => {
-        const currentArray = [...(formData[fieldName] || [])];
-        if (fieldName === 'impactStats' && subField) {
-            currentArray[index] = { ...currentArray[index], [subField]: e.target.value };
-        } else {
-            currentArray[index] = e.target.value;
-        }
-        setFormData({ ...formData, [fieldName]: currentArray });
+        const currentStats = [...(formData.impactStats || [])];
+        currentStats[index] = { ...currentStats[index], [subField]: e.target.value };
+        setFormData({ ...formData, impactStats: currentStats });
     };
 
+    const handleGalleryImageChange = (newUrl: string, index: number) => {
+        const currentImages = [...(formData.galleryImages || [])];
+        currentImages[index] = newUrl;
+        setFormData({ ...formData, galleryImages: currentImages });
+    };
 
     const renderCommonFields = () => (
         <>
@@ -127,22 +163,39 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
                         <label className="block text-sm font-medium text-gray-300">Impact Stats</label>
                         {(formData.impactStats || []).map((stat: {value: string, label: string}, index: number) => (
                             <div key={index} className="flex items-center space-x-2">
-                                <input type="text" placeholder="Value (e.g., 30+)" value={stat.value} onChange={(e) => handleArrayItemChange(e, index, 'impactStats', 'value')} className="flex-1 bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
-                                <input type="text" placeholder="Label (e.g., Local Guides Trained)" value={stat.label} onChange={(e) => handleArrayItemChange(e, index, 'impactStats', 'label')} className="flex-grow w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <input type="text" placeholder="Value (e.g., 30+)" value={stat.value} onChange={(e) => handleImpactStatChange(e, index, 'value')} className="flex-1 bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <input type="text" placeholder="Label (e.g., Local Guides Trained)" value={stat.label} onChange={(e) => handleImpactStatChange(e, index, 'label')} className="flex-grow w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
                                 <button type="button" onClick={() => handleRemoveArrayItem(index, 'impactStats')} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">X</button>
                             </div>
                         ))}
                         <button type="button" onClick={() => handleAddArrayItem('impactStats')} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded mt-2">Add Stat</button>
                     </div>
                     <div className="space-y-3 p-4 border border-gray-600 rounded-md">
-                         <label className="block text-sm font-medium text-gray-300">Gallery Image URLs</label>
-                         {(formData.galleryImages || []).map((url: string, index: number) => (
-                            <div key={index} className="flex items-center space-x-2">
-                                <input type="text" placeholder="https://example.com/image.jpg" value={url} onChange={(e) => handleArrayItemChange(e, index, 'galleryImages')} className="w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
-                                <button type="button" onClick={() => handleRemoveArrayItem(index, 'galleryImages')} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">X</button>
-                            </div>
-                         ))}
-                         <button type="button" onClick={() => handleAddArrayItem('galleryImages')} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded mt-2">Add Image URL</button>
+                         <label className="block text-sm font-medium text-gray-300">Gallery Images</label>
+                         <div className="space-y-4">
+                            {(formData.galleryImages || []).map((url: string, index: number) => (
+                                <div key={index} className="bg-gray-700 p-4 rounded-md">
+                                    <div className="flex items-start space-x-4">
+                                        <div className="flex-grow">
+                                            <ImageUploader 
+                                                currentImageUrl={url}
+                                                onImageUrlChange={(newUrl) => handleGalleryImageChange(newUrl, index)}
+                                            />
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => handleRemoveArrayItem(index, 'galleryImages')} 
+                                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded flex-shrink-0"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                         </div>
+                         <button type="button" onClick={() => handleAddArrayItem('galleryImages')} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded mt-4">
+                            Add Gallery Image
+                         </button>
                     </div>
                 </>;
             case 'news':
@@ -162,7 +215,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-300">Date</label>
-                        <input type="text" name="date" value={formData.date || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
+                        <input type="date" name="date" value={formData.date || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
                     </div>
                 </>;
              case 'tours':

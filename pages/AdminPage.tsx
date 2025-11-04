@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tour, TeamMember, Project, NewsArticle } from '../types';
 import * as dataService from '../services/dataService';
 import AdminForm from '../components/AdminForm';
@@ -16,6 +15,8 @@ const AdminPage: React.FC = () => {
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
     const [editingType, setEditingType] = useState<ContentType | null>(null);
     const [isFormVisible, setIsFormVisible] = useState(false);
+    
+    const pageTopRef = useRef<HTMLHeadingElement>(null);
 
     useEffect(() => {
         loadAllData();
@@ -32,12 +33,14 @@ const AdminPage: React.FC = () => {
         setEditingItem(item);
         setEditingType(type);
         setIsFormVisible(true);
+        pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleAddNew = (type: ContentType) => {
         setEditingItem(null);
         setEditingType(type);
         setIsFormVisible(true);
+        pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleDelete = (id: number | string, type: ContentType) => {
@@ -83,7 +86,7 @@ const AdminPage: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-10">Admin Panel</h1>
+            <h1 ref={pageTopRef} className="text-4xl md:text-5xl font-bold text-white text-center mb-10">Admin Panel</h1>
 
             {isFormVisible && editingType ? (
                 <AdminForm 
