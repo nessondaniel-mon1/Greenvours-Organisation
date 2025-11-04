@@ -1,17 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
-import { Project } from '../types';
-import { getProjects } from '../services/dataService';
+import { Project, EducationProgram } from '../types';
+import { getProjects, getEducationPrograms } from '../services/dataService';
 
 interface ConservationPageProps {
     viewProjectDetail: (project: Project) => void;
+    viewProgramDetail: (program: EducationProgram) => void;
 }
 
-const ConservationPage: React.FC<ConservationPageProps> = ({ viewProjectDetail }) => {
+const ConservationPage: React.FC<ConservationPageProps> = ({ viewProjectDetail, viewProgramDetail }) => {
     const [projects, setProjects] = useState<Project[]>([]);
+    const [educationPrograms, setEducationPrograms] = useState<EducationProgram[]>([]);
 
     useEffect(() => {
         setProjects(getProjects());
+        setEducationPrograms(getEducationPrograms());
     }, []);
 
     return (
@@ -54,16 +56,13 @@ const ConservationPage: React.FC<ConservationPageProps> = ({ viewProjectDetail }
                         <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">Knowledge is the first step towards conservation.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-gray-700 p-8 rounded-lg shadow-lg">
-                            <h3 className="text-2xl font-bold text-white mb-3">Community Workshops</h3>
-                            <p className="text-gray-300 mb-4">We run workshops for local communities on sustainable agriculture, waste management, and the economic benefits of conservation, providing them with the tools to protect their natural heritage.</p>
-                            <button className="text-brand-accent font-semibold hover:text-yellow-300 transition">View Workshop Schedule &rarr;</button>
-                        </div>
-                         <div className="bg-gray-700 p-8 rounded-lg shadow-lg">
-                            <h3 className="text-2xl font-bold text-white mb-3">School Programs & Resources</h3>
-                            <p className="text-gray-300 mb-4">Our team has developed educational materials for schools, offering free, downloadable lesson plans and occasionally visiting classrooms to inspire young minds about the wonders of the natural world.</p>
-                            <button className="text-brand-accent font-semibold hover:text-yellow-300 transition">Access Free Resources &rarr;</button>
-                        </div>
+                        {educationPrograms.map(program => (
+                            <div key={program.id} className="bg-gray-700 p-8 rounded-lg shadow-lg">
+                                <h3 className="text-2xl font-bold text-white mb-3">{program.title}</h3>
+                                <p className="text-gray-300 mb-4">{program.description}</p>
+                                <button onClick={() => viewProgramDetail(program)} className="text-brand-accent font-semibold hover:text-yellow-300 transition">{program.callToAction}</button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>

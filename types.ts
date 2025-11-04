@@ -1,5 +1,5 @@
 
-export type Page = 'home' | 'experiences' | 'mission' | 'conservation' | 'relief' | 'involved' | 'blog' | 'contact' | 'tour-detail' | 'admin' | 'project-detail';
+export type Page = 'home' | 'experiences' | 'mission' | 'conservation' | 'relief' | 'involved' | 'blog' | 'contact' | 'tour-detail' | 'admin' | 'project-detail' | 'education-program-detail';
 
 export interface Tour {
   id: number | string;
@@ -43,4 +43,16 @@ export interface Project {
     goals: string[];
     impactStats: { value: string; label: string }[];
     galleryImages: string[];
+}
+
+export interface EducationProgram {
+    id: number | string;
+    title: string;
+    description: string;
+    longDescription: string;
+    callToAction: string;
+    imageUrl: string;
+    targetAudience: string;
+    galleryImages: string[];
+    schedule: { date: string; topic: string; location: string }[];
 }

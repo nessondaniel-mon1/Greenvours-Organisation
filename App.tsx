@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Page, Tour, Project } from './types';
+import { Page, Tour, Project, EducationProgram } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -15,12 +15,14 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import AdminPage from './pages/AdminPage';
 import PasswordModal from './components/PasswordModal';
 import { initializeData } from './services/dataService';
+import EducationProgramDetailPage from './pages/EducationProgramDetailPage';
 
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<EducationProgram | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
 
@@ -36,6 +38,7 @@ const App: React.FC = () => {
     setCurrentPage(targetPage);
     setSelectedTour(null);
     setSelectedProject(null);
+    setSelectedProgram(null);
     window.scrollTo(0, 0);
   }, []);
 
@@ -73,6 +76,12 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const viewProgramDetail = useCallback((program: EducationProgram) => {
+    setSelectedProgram(program);
+    setCurrentPage('education-program-detail');
+    window.scrollTo(0, 0);
+  }, []);
+
 
   const renderPage = () => {
     if (currentPage === 'tour-detail' && selectedTour) {
@@ -80,6 +89,9 @@ const App: React.FC = () => {
     }
     if (currentPage === 'project-detail' && selectedProject) {
         return <ProjectDetailPage project={selectedProject} onBack={() => navigate('conservation')} />;
+    }
+    if (currentPage === 'education-program-detail' && selectedProgram) {
+        return <EducationProgramDetailPage program={selectedProgram} onBack={() => navigate('conservation')} />;
     }
 
     switch (currentPage) {
@@ -90,7 +102,7 @@ const App: React.FC = () => {
       case 'mission':
         return <MissionPage />;
       case 'conservation':
-        return <ConservationPage viewProjectDetail={viewProjectDetail} />;
+        return <ConservationPage viewProjectDetail={viewProjectDetail} viewProgramDetail={viewProgramDetail} />;
       case 'relief':
         return <ReliefPage navigate={navigate} />;
       case 'involved':

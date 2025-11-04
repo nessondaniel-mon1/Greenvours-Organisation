@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Tour, TeamMember, Project, NewsArticle } from '../types';
+import { Tour, TeamMember, Project, NewsArticle, EducationProgram } from '../types';
 import * as dataService from '../services/dataService';
 import AdminForm from '../components/AdminForm';
 
-type ContentType = 'tours' | 'team' | 'projects' | 'news';
-type ContentItem = Tour | TeamMember | Project | NewsArticle;
+type ContentType = 'tours' | 'team' | 'projects' | 'news' | 'educationPrograms';
+type ContentItem = Tour | TeamMember | Project | NewsArticle | EducationProgram;
 
 const AdminPage: React.FC = () => {
     const [tours, setTours] = useState<Tour[]>([]);
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
     const [news, setNews] = useState<NewsArticle[]>([]);
+    const [educationPrograms, setEducationPrograms] = useState<EducationProgram[]>([]);
 
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
     const [editingType, setEditingType] = useState<ContentType | null>(null);
@@ -27,6 +28,7 @@ const AdminPage: React.FC = () => {
         setTeam(dataService.getTeam());
         setProjects(dataService.getProjects());
         setNews(dataService.getNews());
+        setEducationPrograms(dataService.getEducationPrograms());
     };
 
     const handleEdit = (item: ContentItem, type: ContentType) => {
@@ -127,6 +129,14 @@ const AdminPage: React.FC = () => {
                             <button onClick={() => handleAddNew('news')} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add New</button>
                         </div>
                         {renderList(news, 'news')}
+                    </div>
+                    
+                    <div className="bg-gray-800 p-6 rounded-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold text-white">Manage Education Programs</h2>
+                            <button onClick={() => handleAddNew('educationPrograms')} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add New</button>
+                        </div>
+                        {renderList(educationPrograms, 'educationPrograms')}
                     </div>
                 </div>
             )}

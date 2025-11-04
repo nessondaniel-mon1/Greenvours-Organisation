@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ImageUploader from './ImageUploader';
+import { EducationProgram } from '../types';
 
 interface AdminFormProps {
     item: any;
@@ -48,14 +49,25 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
             initialData.impactStats = initialData.impactStats || [];
             initialData.galleryImages = initialData.galleryImages || [];
         }
+        
+        if (type === 'educationPrograms') {
+            initialData.schedule = initialData.schedule || [];
+            initialData.galleryImages = initialData.galleryImages || [];
+        }
 
         if (type === 'news') {
              initialData.date = toInputDate(initialData.date);
         }
 
-        if (!initialData.imageUrl) {
+        if (type !== 'educationPrograms' && !initialData.imageUrl) {
+            // initialData.imageUrl = '';
+        }
+
+        if (type === 'educationPrograms' && !initialData.imageUrl) {
             initialData.imageUrl = '';
         }
+
+
         setFormData(initialData);
     }, [item, type]);
 
@@ -86,25 +98,30 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         onSave(finalData);
     };
 
-    const handleAddArrayItem = (fieldName: 'impactStats' | 'galleryImages') => {
+    const handleAddArrayItem = (fieldName: 'impactStats' | 'galleryImages' | 'schedule') => {
         const currentArray = formData[fieldName] || [];
-        const newItem = fieldName === 'impactStats' ? { value: '', label: '' } : '';
+        let newItem;
+        if (fieldName === 'impactStats') newItem = { value: '', label: '' };
+        else if (fieldName === 'schedule') newItem = { date: '', topic: '', location: '' };
+        else newItem = '';
+        
         setFormData({ ...formData, [fieldName]: [...currentArray, newItem] });
     };
 
-    const handleRemoveArrayItem = (index: number, fieldName: 'impactStats' | 'galleryImages') => {
+    const handleRemoveArrayItem = (index: number, fieldName: 'impactStats' | 'galleryImages' | 'schedule') => {
         const currentArray = formData[fieldName] || [];
         setFormData({ ...formData, [fieldName]: currentArray.filter((_, i) => i !== index) });
     };
 
-    const handleImpactStatChange = (
+    const handleArrayItemChange = (
         e: React.ChangeEvent<HTMLInputElement>,
         index: number,
-        subField: 'value' | 'label'
+        fieldName: 'impactStats' | 'schedule',
+        subField: string
     ) => {
-        const currentStats = [...(formData.impactStats || [])];
-        currentStats[index] = { ...currentStats[index], [subField]: e.target.value };
-        setFormData({ ...formData, impactStats: currentStats });
+        const currentItems = [...(formData[fieldName] || [])];
+        currentItems[index] = { ...currentItems[index], [subField]: e.target.value };
+        setFormData({ ...formData, [fieldName]: currentItems });
     };
 
     const handleGalleryImageChange = (newUrl: string, index: number) => {
@@ -113,16 +130,16 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         setFormData({ ...formData, galleryImages: currentImages });
     };
 
-    const renderCommonFields = () => (
+    const renderCommonFields = (showImageUploader = true) => (
         <>
             <div>
                 <label className="block text-sm font-medium text-gray-300">Title / Name</label>
-                <input type="text" name={type === 'team' || type === 'projects' ? 'name' : 'title'} value={formData.name || formData.title || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
+                <input type="text" name={type === 'team' || type === 'projects' || type === 'educationPrograms' ? 'name' : 'title'} value={formData.name || formData.title || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
             </div>
-            <ImageUploader 
+            {showImageUploader && <ImageUploader 
                 currentImageUrl={formData.imageUrl || ''}
                 onImageUrlChange={handleImageChange}
-            />
+            />}
         </>
     );
 
@@ -163,8 +180,8 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
                         <label className="block text-sm font-medium text-gray-300">Impact Stats</label>
                         {(formData.impactStats || []).map((stat: {value: string, label: string}, index: number) => (
                             <div key={index} className="flex items-center space-x-2">
-                                <input type="text" placeholder="Value (e.g., 30+)" value={stat.value} onChange={(e) => handleImpactStatChange(e, index, 'value')} className="flex-1 bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
-                                <input type="text" placeholder="Label (e.g., Local Guides Trained)" value={stat.label} onChange={(e) => handleImpactStatChange(e, index, 'label')} className="flex-grow w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <input type="text" placeholder="Value (e.g., 30+)" value={stat.value} onChange={(e) => handleArrayItemChange(e, index, 'impactStats', 'value')} className="flex-1 bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <input type="text" placeholder="Label (e.g., Local Guides Trained)" value={stat.label} onChange={(e) => handleArrayItemChange(e, index, 'impactStats', 'label')} className="flex-grow w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
                                 <button type="button" onClick={() => handleRemoveArrayItem(index, 'impactStats')} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">X</button>
                             </div>
                         ))}
@@ -218,6 +235,67 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
                         <input type="date" name="date" value={formData.date || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
                     </div>
                 </>;
+            case 'educationPrograms':
+                return <>
+                    {renderCommonFields()}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300">Short Description</label>
+                        <textarea name="description" value={formData.description || ''} onChange={handleChange} rows={3} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-300">Long Description</label>
+                        <textarea name="longDescription" value={formData.longDescription || ''} onChange={handleChange} rows={6} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300">Target Audience</label>
+                        <input type="text" name="targetAudience" value={formData.targetAudience || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300">Button Text (e.g., View Schedule →)</label>
+                        <input type="text" name="callToAction" value={formData.callToAction || ''} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2" required />
+                    </div>
+                     <div className="space-y-3 p-4 border border-gray-600 rounded-md">
+                        <label className="block text-sm font-medium text-gray-300">Schedule</label>
+                        {(formData.schedule || []).map((item: EducationProgram['schedule'][0], index: number) => (
+                            <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                                <input type="text" placeholder="Date (e.g., Nov 15, 2023)" value={item.date} onChange={(e) => handleArrayItemChange(e, index, 'schedule', 'date')} className="flex-1 bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <input type="text" placeholder="Topic" value={item.topic} onChange={(e) => handleArrayItemChange(e, index, 'schedule', 'topic')} className="flex-grow w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <div className="flex gap-2">
+                                <input type="text" placeholder="Location" value={item.location} onChange={(e) => handleArrayItemChange(e, index, 'schedule', 'location')} className="flex-grow w-full bg-gray-600 border-gray-500 rounded-md shadow-sm text-white p-2" />
+                                <button type="button" onClick={() => handleRemoveArrayItem(index, 'schedule')} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">X</button>
+                                </div>
+                            </div>
+                        ))}
+                        <button type="button" onClick={() => handleAddArrayItem('schedule')} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded mt-2">Add Schedule Item</button>
+                    </div>
+                    <div className="space-y-3 p-4 border border-gray-600 rounded-md">
+                         <label className="block text-sm font-medium text-gray-300">Gallery Images</label>
+                         <div className="space-y-4">
+                            {(formData.galleryImages || []).map((url: string, index: number) => (
+                                <div key={index} className="bg-gray-700 p-4 rounded-md">
+                                    <div className="flex items-start space-x-4">
+                                        <div className="flex-grow">
+                                            <ImageUploader 
+                                                currentImageUrl={url}
+                                                onImageUrlChange={(newUrl) => handleGalleryImageChange(newUrl, index)}
+                                            />
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => handleRemoveArrayItem(index, 'galleryImages')} 
+                                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded flex-shrink-0"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                         </div>
+                         <button type="button" onClick={() => handleAddArrayItem('galleryImages')} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded mt-4">
+                            Add Gallery Image
+                         </button>
+                    </div>
+                </>;
              case 'tours':
                 return <>
                     {renderCommonFields()}
@@ -267,7 +345,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
 
     return (
         <div className="bg-gray-800 p-8 rounded-lg">
-             <h2 className="text-2xl font-bold text-white mb-6 capitalize">{item ? 'Edit' : 'Add'} {type}</h2>
+             <h2 className="text-2xl font-bold text-white mb-6 capitalize">{item ? 'Edit' : 'Add'} {type === 'news' ? 'Blog Post' : type.replace(/([A-Z])/g, ' $1')}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
                 {renderFormFields()}
                 <div className="flex justify-end space-x-4 pt-4">

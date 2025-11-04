@@ -1,4 +1,4 @@
-import { Tour, NewsArticle, TeamMember, Project } from './types';
+import { Tour, NewsArticle, TeamMember, Project, EducationProgram } from './types';
 
 export const initialTours: Tour[] = [
     { 
@@ -128,4 +128,45 @@ export const initialProjects: Project[] = [
             'https://picsum.photos/seed/proj3gal4/600/400'
         ]
     },
+];
+
+export const initialEducationPrograms: EducationProgram[] = [
+    {
+        id: 1,
+        title: 'Community Conservation Workshops',
+        description: 'We run workshops for local communities on sustainable agriculture, waste management, and the economic benefits of conservation, providing them with the tools to protect their natural heritage.',
+        longDescription: 'Our Community Conservation Workshops are hands-on, interactive sessions designed to empower local communities as the primary stewards of their environment. We cover topics ranging from soil conservation techniques and organic farming to creating small-scale eco-tourism enterprises. By linking environmental health directly to economic prosperity, we foster a sustainable model where both people and nature can thrive. These workshops are a cornerstone of our belief that conservation must be community-led to be effective.',
+        callToAction: 'View Workshop Schedule →',
+        imageUrl: 'https://picsum.photos/seed/ugedu1/600/400',
+        targetAudience: 'Farmers, community leaders, and small business owners living near protected areas.',
+        galleryImages: [
+            'https://picsum.photos/seed/edugal1_1/600/400',
+            'https://picsum.photos/seed/edugal1_2/600/400',
+            'https://picsum.photos/seed/edugal1_3/600/400',
+        ],
+        schedule: [
+            { date: 'Nov 15, 2023', topic: 'Intro to Permaculture', location: 'Kasese Town Hall' },
+            { date: 'Dec 05, 2023', topic: 'Waste-to-Wealth: Composting & Briquettes', location: 'Fort Portal Youth Center' },
+            { date: 'Jan 20, 2024', topic: 'Beekeeping for Biodiversity', location: 'Bwindi Community Center' },
+        ],
+    },
+    {
+        id: 2,
+        title: 'Future Stewards School Program',
+        description: 'Our team has developed educational materials for schools, offering free, downloadable lesson plans and occasionally visiting classrooms to inspire young minds about the wonders of the natural world.',
+        longDescription: 'The Future Stewards School Program aims to ignite a passion for conservation in the next generation. We partner with primary and secondary schools across Uganda to provide engaging, curriculum-aligned resources that bring environmental science to life. Our program includes beautifully illustrated booklets, interactive classroom activities, and a "Ranger for a Day" experience where students can meet real wildlife rangers. We believe that by educating children today, we are investing in a greener, more hopeful future for Uganda.',
+        callToAction: 'Access Free Resources →',
+        imageUrl: 'https://picsum.photos/seed/ugedu2/600/400',
+        targetAudience: 'Primary and secondary school students and teachers in Uganda.',
+        galleryImages: [
+            'https://picsum.photos/seed/edugal2_1/600/400',
+            'https://picsum.photos/seed/edugal2_2/600/400',
+            'https://picsum.photos/seed/edugal2_3/600/400',
+        ],
+        schedule: [
+             { date: 'Ongoing', topic: 'Resource Pack Download', location: 'Online' },
+             { date: 'Feb 10, 2024', topic: 'Live Q&A with a Wildlife Vet', location: 'Online Webinar' },
+             { date: 'Mar 22, 2024', topic: 'National School Conservation Art Contest Begins', location: 'Nationwide' },
+        ],
+    }
 ];
