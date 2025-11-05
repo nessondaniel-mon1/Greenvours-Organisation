@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sendNotificationEmail } from '../services/dataService';
 
 type Tab = 'donate' | 'volunteer' | 'partner';
 
@@ -7,6 +8,7 @@ const DonateForm: React.FC = () => {
     const [customAmount, setCustomAmount] = useState('');
     const [frequency, setFrequency] = useState<'one-time' | 'monthly'>('one-time');
     const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
 
     const amounts = ['50000', '100000', '250000', '500000'];
     const currentAmount = selectedAmount || customAmount;
@@ -29,6 +31,51 @@ const DonateForm: React.FC = () => {
         }
     };
 
+    const handlePayment = async (method: 'Mobile Money' | 'Card') => {
+        if (!currentAmount) return;
+        setPaymentStatus('processing');
+        try {
+            const subject = `New Donation: UGX ${parseFloat(currentAmount).toLocaleString()}`;
+            const htmlBody = `
+                <h1>🎉 New Donation Received!</h1>
+                <p>Details of the donation:</p>
+                <ul>
+                    <li><strong>Amount:</strong> UGX ${parseFloat(currentAmount).toLocaleString()}</li>
+                    <li><strong>Frequency:</strong> ${frequency}</li>
+                    <li><strong>Payment Method:</strong> ${method}</li>
+                </ul>
+                <p>Please verify the transaction in the payment processor's dashboard.</p>
+            `;
+            await sendNotificationEmail({ subject, htmlBody });
+            setPaymentStatus('success');
+        } catch (error) {
+            console.error('Failed to send donation notification:', error);
+            alert('There was a problem processing your donation. Please try again.');
+            setPaymentStatus('idle');
+        }
+    };
+
+    if (paymentStatus === 'success') {
+        return (
+            <div className="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-brand-accent mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <h2 className="text-2xl font-bold text-white mb-4">Thank You For Your Generosity!</h2>
+                <p className="text-gray-300 mb-6">Your donation of UGX {parseFloat(currentAmount!).toLocaleString()} has been received. You are making a real difference.</p>
+                <button
+                    onClick={() => {
+                        setShowPaymentMethods(false);
+                        setPaymentStatus('idle');
+                        setSelectedAmount(null);
+                        setCustomAmount('');
+                    }}
+                    className="w-full bg-brand-green text-white font-bold py-3 px-4 rounded-lg hover:bg-brand-light-green transition text-lg"
+                >
+                    Make Another Donation
+                </button>
+            </div>
+        );
+    }
+
     if (showPaymentMethods) {
         return (
             <div className="space-y-6">
@@ -47,13 +94,19 @@ const DonateForm: React.FC = () => {
                 <div>
                     <label className="block text-lg font-semibold text-gray-200 mb-3">Choose Payment Method</label>
                     <div className="space-y-4">
-                        <button className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition">
+                        <button 
+                            onClick={() => handlePayment('Mobile Money')}
+                            disabled={paymentStatus === 'processing'}
+                            className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition disabled:opacity-50 disabled:cursor-wait">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                            Mobile Money
+                            {paymentStatus === 'processing' ? 'Processing...' : 'Mobile Money'}
                         </button>
-                         <button className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition">
+                         <button 
+                            onClick={() => handlePayment('Card')}
+                            disabled={paymentStatus === 'processing'}
+                            className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition disabled:opacity-50 disabled:cursor-wait">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                            Credit / Debit Card
+                            {paymentStatus === 'processing' ? 'Processing...' : 'Credit / Debit Card'}
                         </button>
                     </div>
                 </div>

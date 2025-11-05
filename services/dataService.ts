@@ -109,3 +109,38 @@ export function deleteItem<T extends { id: number | string }>(key: string, id: n
 }
 
 export const DATA_KEYS = KEYS;
+
+// --- START: Notification Service ---
+
+// A placeholder email address where all notifications will be sent.
+const RECIPIENT_EMAIL = 'nessondaniel256@gmail.com';
+
+interface EmailParams {
+  subject: string;
+  htmlBody: string;
+}
+
+/**
+ * Simulates sending a notification email.
+ * In a real-world application, this function would use a backend service
+ * or a third-party email API (like SendGrid, Mailgun, etc.) to dispatch the email.
+ * For now, it logs the email content to the developer console for demonstration purposes.
+ * @param {EmailParams} emailDetails - The subject and HTML body of the email.
+ */
+export const sendNotificationEmail = async ({ subject, htmlBody }: EmailParams): Promise<void> => {
+  console.log('--- 📧 EMAIL SIMULATION 📧 ---');
+  console.log(`TO: ${RECIPIENT_EMAIL}`);
+  console.log(`SUBJECT: ${subject}`);
+  console.log('BODY (HTML):');
+  console.log(htmlBody);
+  console.log('-----------------------------');
+
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // In a real scenario, you would handle potential errors from the email service here.
+  // For this simulation, we'll always assume success.
+  return Promise.resolve();
+};
+
+// --- END: Notification Service ---

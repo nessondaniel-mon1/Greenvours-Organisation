@@ -1,5 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import { sendNotificationEmail } from '../services/dataService';
 
 const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -45,6 +46,22 @@ const ContactPage: React.FC = () => {
 
             setGeminiResponse(response.text);
             setSubmissionStatus('success');
+
+            // Send notification email
+            const subject = `New Contact Form Message: "${formData.subject}"`;
+            const htmlBody = `
+                <h1>New Message from Website Contact Form</h1>
+                <p>You have received a new message from ${formData.name}.</p>
+                <h2>Details:</h2>
+                <ul>
+                    <li><strong>Name:</strong> ${formData.name}</li>
+                    <li><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></li>
+                    <li><strong>Subject:</strong> ${formData.subject}</li>
+                </ul>
+                <h2>Message:</h2>
+                <p style="white-space: pre-wrap; background-color: #f0f0f0; border-left: 3px solid #1a4731; padding: 15px; border-radius: 5px; color: #333;">${formData.message}</p>
+            `;
+            await sendNotificationEmail({ subject, htmlBody });
 
         } catch (error) {
             console.error("Gemini API error:", error);

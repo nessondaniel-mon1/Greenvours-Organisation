@@ -1,4 +1,5 @@
 import React, { useState, FormEvent } from 'react';
+import { sendNotificationEmail } from '../services/dataService';
 
 interface RegisterInterestModalProps {
   programTitle: string;
@@ -14,13 +15,30 @@ const RegisterInterestModal: React.FC<RegisterInterestModalProps> = ({ programTi
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
-    // Simulate API call
-    setTimeout(() => {
-      setStatus('success');
-    }, 1500);
+    try {
+        const subject = `New Interest Registered: ${programTitle}`;
+        const htmlBody = `
+            <h1>New Interest Registration</h1>
+            <p>A user has registered their interest for the program: <strong>${programTitle}</strong>.</p>
+            <h2>User Details:</h2>
+            <ul>
+                <li><strong>Name:</strong> ${formData.name}</li>
+                <li><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></li>
+            </ul>
+            <h2>Message:</h2>
+            <p style="white-space: pre-wrap;">${formData.message || 'No message provided.'}</p>
+        `;
+
+        await sendNotificationEmail({ subject, htmlBody });
+        setStatus('success');
+    } catch (error) {
+        console.error("Failed to send interest registration notification:", error);
+        alert('There was an error submitting your request. Please try again.');
+        setStatus('idle');
+    }
   };
 
   return (

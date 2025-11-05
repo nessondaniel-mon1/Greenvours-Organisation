@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tour } from '../types';
-import { getTours } from '../services/dataService';
+import { getTours, sendNotificationEmail } from '../services/dataService';
 
 interface TourDetailPageProps {
   tour: Tour;
@@ -16,6 +15,30 @@ const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
         const foundTour = allTours.find(t => t.id === tour.id);
         setDetailedTour(foundTour || tour);
     }, [tour]);
+
+    const handleBooking = async () => {
+        if (!detailedTour) return;
+        if (window.confirm(`Are you sure you want to request a booking for "${detailedTour.title}"? Our team will contact you to finalize the details.`)) {
+            try {
+                const subject = `New Booking Inquiry: ${detailedTour.title}`;
+                const htmlBody = `
+                    <h1>New Booking Inquiry</h1>
+                    <p>A user has expressed interest in booking the following tour:</p>
+                    <ul>
+                        <li><strong>Tour:</strong> ${detailedTour.title}</li>
+                        <li><strong>Price:</strong> UGX ${detailedTour.price.toLocaleString()}</li>
+                        <li><strong>Duration:</strong> ${detailedTour.duration} days</li>
+                    </ul>
+                    <p>Please follow up with them to complete the booking process. Note: This is an automated inquiry; user contact details were not collected at this stage.</p>
+                `;
+                await sendNotificationEmail({ subject, htmlBody });
+                alert('Your booking request has been sent! Our team will be in touch with you shortly to confirm the details. Thank you!');
+            } catch (error) {
+                console.error("Failed to send booking notification:", error);
+                alert("Sorry, we couldn't process your booking request at the moment. Please try again later.");
+            }
+        }
+    };
 
     if (!detailedTour) {
         return <div className="text-center py-20 text-white">Loading tour details...</div>;
@@ -78,8 +101,8 @@ const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
                                 <li className="flex items-center"><span className="text-brand-accent mr-2">&#10003;</span> Most Meals</li>
                             </ul>
 
-                             <button className="w-full bg-brand-accent text-brand-green font-bold py-3 px-4 rounded-full hover:bg-opacity-90 transition mt-8 text-lg">
-                                Book Now
+                             <button onClick={handleBooking} className="w-full bg-brand-accent text-brand-green font-bold py-3 px-4 rounded-full hover:bg-opacity-90 transition mt-8 text-lg">
+                                Request to Book
                             </button>
                             <p className="text-xs text-center text-gray-500 mt-2">Secure booking via Stripe.</p>
 
