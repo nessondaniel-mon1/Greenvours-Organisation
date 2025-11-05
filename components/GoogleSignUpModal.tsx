@@ -13,14 +13,18 @@ const GoogleSignUpModal: React.FC<GoogleSignUpModalProps> = ({ onClose }) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      // FIX: Use auth.signInWithPopup method for v8 compatibility.
+      // Reverted to signInWithPopup to fix environment compatibility issues.
+      // This method is better supported in this context than signInWithRedirect.
       await auth.signInWithPopup(googleProvider);
-      onClose();
+      onClose(); // Close modal on successful sign-in
     } catch (err: any) {
       console.error("Google sign-in error:", err);
-      setError("Failed to sign in. Please try again.");
+      // Don't show an error message if the user simply closes the popup.
+      if (err.code !== 'auth/popup-closed-by-user') {
+          setError("Failed to sign in. Please try again.");
+      }
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
@@ -50,7 +54,7 @@ const GoogleSignUpModal: React.FC<GoogleSignUpModalProps> = ({ onClose }) => {
                 disabled={isSubmitting}
                 className="w-full flex items-center justify-center bg-white text-gray-700 font-semibold py-3 px-4 rounded-md hover:bg-gray-200 transition-colors disabled:bg-gray-300 disabled:cursor-wait"
             >
-                {isSubmitting ? 'Redirecting...' : 'Continue with Google'}
+                {isSubmitting ? 'Signing In...' : 'Continue with Google'}
             </button>
             
             {error && <p className="text-red-400 text-sm mt-4">{error}</p>}

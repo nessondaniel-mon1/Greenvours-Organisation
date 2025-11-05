@@ -36,7 +36,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     initializeData();
+    
     // FIX: Use auth.onAuthStateChanged method for v8 compatibility.
+    // This listener handles user state changes for all sign-in methods,
+    // including the popup flow.
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       setAuthInitialized(true);
