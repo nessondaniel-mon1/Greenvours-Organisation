@@ -1,15 +1,38 @@
 
 import React, { useState, useEffect } from 'react';
-import { TeamMember } from '../types';
-import { getTeam } from '../services/dataService';
+import { TeamMember, VisionContent } from '../types';
+import { getTeam, getVisionContent, saveVisionContent } from '../services/dataService';
+import ImageUploader from '../components/ImageUploader';
 
+interface MissionPageProps {
+    isAdmin: boolean;
+}
 
-const MissionPage: React.FC = () => {
+const MissionPage: React.FC<MissionPageProps> = ({ isAdmin }) => {
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [visionContent, setVisionContent] = useState<VisionContent | null>(null);
+    const [isEditingImage, setIsEditingImage] = useState(false);
 
     useEffect(() => {
         setTeamMembers(getTeam());
+        loadVisionContent();
     }, []);
+
+    const loadVisionContent = () => {
+        const vision = getVisionContent();
+        if (vision.length > 0) {
+            setVisionContent(vision[0]); // Assuming there's only one vision content item
+        }
+    };
+
+    const handleImageUpload = (imageUrl: string) => {
+        if (visionContent) {
+            const updatedVisionContent = { ...visionContent, imageUrl };
+            saveVisionContent([updatedVisionContent]);
+            setVisionContent(updatedVisionContent);
+            setIsEditingImage(false);
+        }
+    };
 
     return (
         <div className="bg-gray-900">
@@ -24,16 +47,29 @@ const MissionPage: React.FC = () => {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                         <div>
-                            <h2 className="text-3xl font-bold text-white mb-4">Our Vision</h2>
+                            <h2 className="text-3xl font-bold text-white mb-4">{visionContent?.title || 'Our Vision'}</h2>
                             <p className="text-gray-300 leading-relaxed mb-4">
-                                Greenvours was founded on a simple, powerful idea: that travel can be a force for good in Uganda. We envision a world where exploring the Pearl of Africa directly contributes to its preservation, and where local communities are empowered as its primary custodians. 
-                            </p>
-                            <p className="text-gray-300 leading-relaxed">
-                                By creating a self-sustaining cycle—where tourism funds conservation and relief, which in turn protects the natural wonders that attract travelers—we aim to build a resilient future for both people and planet.
+                                {visionContent?.content || 'Loading vision content...'}
                             </p>
                         </div>
-                        <div>
-                            <img src="https://picsum.photos/seed/ugmission/600/400" alt="Team working in Uganda" className="rounded-lg shadow-xl"/>
+                        <div className="relative">
+                            <img src={visionContent?.imageUrl || "https://picsum.photos/seed/ugmission/600/400"} alt="Team working in Uganda" className="rounded-lg shadow-xl"/>
+                            {isAdmin && !isEditingImage && (
+                                <button 
+                                    onClick={() => setIsEditingImage(true)}
+                                    className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg"
+                                >
+                                    Edit Image
+                                </button>
+                            )}
+                            {isAdmin && isEditingImage && (
+                                <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center rounded-lg">
+                                    <ImageUploader 
+                                        currentImageUrl={visionContent?.imageUrl || ''}
+                                        onImageUrlChange={handleImageUpload}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

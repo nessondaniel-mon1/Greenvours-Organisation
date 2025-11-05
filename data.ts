@@ -39,11 +39,11 @@ export const initialTours: Tour[] = [
 
 
 export const initialNews: NewsArticle[] = [
-    { id: 1, title: 'Major Reforestation Drive in Budongo Forest', excerpt: 'We planted over 10,000 native saplings this past quarter, protecting vital chimpanzee habitats.', imageUrl: 'https://picsum.photos/seed/ugnews1/600/400', category: 'Conservation', date: 'Oct 28, 2023' },
-    { id: 2, title: 'Urgent Flood Relief in Kasese District', excerpt: 'Our team is on the ground providing essential supplies to families affected by the recent floods from River Nyamwamba.', imageUrl: 'https://picsum.photos/seed/ugnews2/600/400', category: 'Relief Update', date: 'Oct 25, 2023' },
-    { id: 3, title: 'Discovering the Beauty of Sipi Falls', excerpt: 'A look back at our latest eco-tour, balancing adventure with responsible travel in Eastern Uganda.', imageUrl: 'https://picsum.photos/seed/ugnews3/600/400', category: 'Travel', date: 'Oct 22, 2023' },
-    { id: 4, title: 'The Importance of Ranger Patrols', excerpt: 'Learn how our funding supports the brave rangers of Uganda Wildlife Authority who protect our national parks from poachers and illegal activity.', imageUrl: 'https://picsum.photos/seed/ugblog4/800/500', category: 'Conservation', date: 'October 15, 2023' },
-    { id: 5, title: 'A Day in the Life of a Kampala Volunteer', excerpt: 'An interview with one of our dedicated volunteers, sharing their experience sorting supplies and coordinating logistics for our relief efforts.', imageUrl: 'https://picsum.photos/seed/ugblog5/800/500', category: 'Relief Update', date: 'October 10, 2023' },
+    { id: 1, title: 'Major Reforestation Drive in Budongo Forest', excerpt: 'We planted over 10,000 native saplings this past quarter, protecting vital chimpanzee habitats.', content: 'We planted over 10,000 native saplings this past quarter, protecting vital chimpanzee habitats. This is a longer version of the content.', imageUrl: 'https://picsum.photos/seed/ugnews1/600/400', galleryImages: ['https://picsum.photos/seed/ugnews1/600/400', 'https://picsum.photos/seed/ugnews1-2/600/400'], category: 'Conservation', date: 'Oct 28, 2023' },
+    { id: 2, title: 'Urgent Flood Relief in Kasese District', excerpt: 'Our team is on the ground providing essential supplies to families affected by the recent floods from River Nyamwamba.', content: 'Our team is on the ground providing essential supplies to families affected by the recent floods from River Nyamwamba. This is a longer version of the content.', imageUrl: 'https://picsum.photos/seed/ugnews2/600/400', galleryImages: ['https://picsum.photos/seed/ugnews2/600/400', 'https://picsum.photos/seed/ugnews2-2/600/400'], category: 'Relief Update', date: 'Oct 25, 2023' },
+    { id: 3, title: 'Discovering the Beauty of Sipi Falls', excerpt: 'A look back at our latest eco-tour, balancing adventure with responsible travel in Eastern Uganda.', content: 'A look back at our latest eco-tour, balancing adventure with responsible travel in Eastern Uganda. This is a longer version of the content.', imageUrl: 'https://picsum.photos/seed/ugnews3/600/400', galleryImages: ['https://picsum.photos/seed/ugnews3/600/400', 'https://picsum.photos/seed/ugnews3-2/600/400'], category: 'Travel', date: 'Oct 22, 2023' },
+    { id: 4, title: 'The Importance of Ranger Patrols', excerpt: 'Learn how our funding supports the brave rangers of Uganda Wildlife Authority who protect our national parks from poachers and illegal activity.', content: 'Learn how our funding supports the brave rangers of Uganda Wildlife Authority who protect our national parks from poachers and illegal activity. This is a longer version of the content.', imageUrl: 'https://picsum.photos/seed/ugblog4/800/500', galleryImages: ['https://picsum.photos/seed/ugblog4/800/500', 'https://picsum.photos/seed/ugblog4-2/800/500'], category: 'Conservation', date: 'October 15, 2023' },
+    { id: 5, title: 'A Day in the Life of a Kampala Volunteer', excerpt: 'An interview with one of our dedicated volunteers, sharing their experience sorting supplies and coordinating logistics for our relief efforts.', content: 'An interview with one of our dedicated volunteers, sharing their experience sorting supplies and coordinating logistics for our relief efforts. This is a longer version of the content.', imageUrl: 'https://picsum.photos/seed/ugblog5/800/500', galleryImages: ['https://picsum.photos/seed/ugblog5/800/500', 'https://picsum.photos/seed/ugblog5-2/800/500'], category: 'Relief Update', date: 'October 10, 2023' },
 ];
 
 export const initialTeamMembers: TeamMember[] = [
@@ -127,6 +127,45 @@ export const initialProjects: Project[] = [
             'https://picsum.photos/seed/proj3gal3/600/400',
             'https://picsum.photos/seed/proj3gal4/600/400'
         ]
+    },
+];
+
+export const initialVisionContent: VisionContent[] = [
+    {
+        id: 1,
+        title: 'Our Vision',
+        content: 'Greenvours was founded on a simple, powerful idea: that travel can be a force for good in Uganda. We envision a world where exploring the Pearl of Africa directly contributes to its preservation, and where local communities are empowered as its primary custodians. By creating a self-sustaining cycle—where tourism funds conservation and relief, which in turn protects the natural wonders that attract travelers—we aim to build a resilient future for both people and planet.',
+        imageUrl: 'https://picsum.photos/seed/ugmission/600/400',
+    },
+];
+
+export const initialHowWeHelpItems: HowWeHelpItem[] = [
+    {
+        id: 1,
+        title: 'Essential Supplies',
+        description: 'Distribution of clean water, food, medical supplies, and temporary shelter.',
+    },
+    {
+        id: 2,
+        title: 'Local Partnerships',
+        description: 'Working with trusted local organizations to ensure aid reaches those who need it most.',
+    },
+    {
+        id: 3,
+        title: '100% Transparency',
+        description: 'Donations to specific relief funds are used exclusively for those efforts, with reports available.',
+    },
+];
+
+export const initialReliefProjects: ReliefProject[] = [
+    {
+        id: 1,
+        title: 'Karamoja Region Food Security Response',
+        description: 'A prolonged dry spell in the Karamoja sub-region is causing severe food shortages. Our teams are partnering with local leaders to distribute emergency food supplies, high-nutrient supplements for children, and drought-resistant seeds for future planting.',
+        status: 'active',
+        imageUrl: 'https://picsum.photos/seed/ugrelief1/600/400',
+        goal: 380000000,
+        raised: 285000000,
     },
 ];
 

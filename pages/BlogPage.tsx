@@ -3,7 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { NewsArticle } from '../types';
 import { getNews } from '../services/dataService';
 
-const BlogPage: React.FC = () => {
+interface BlogPageProps {
+  viewBlogDetail: (article: NewsArticle) => void;
+}
+
+const BlogPage: React.FC<BlogPageProps> = ({ viewBlogDetail }) => {
     const [blogPosts, setBlogPosts] = useState<NewsArticle[]>([]);
 
     useEffect(() => {
@@ -28,7 +32,7 @@ const BlogPage: React.FC = () => {
                                 <p className="text-gray-300 text-sm mb-4">{post.excerpt}</p>
                                 <div className="mt-auto border-t border-gray-700 pt-4 flex justify-between items-center text-xs text-gray-400">
                                     <span>{post.date}</span>
-                                    <button className="font-semibold text-brand-accent hover:text-yellow-300 transition">Read More &rarr;</button>
+                                    <button onClick={() => viewBlogDetail(post)} className="font-semibold text-brand-accent hover:text-yellow-300 transition">Read More &rarr;</button>
                                 </div>
                             </div>
                         </div>

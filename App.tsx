@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Page, Tour, Project, EducationProgram } from './types';
+import { Page, Tour, Project, EducationProgram, NewsArticle } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -14,13 +14,11 @@ import TourDetailPage from './pages/TourDetailPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import AdminPage from './pages/AdminPage';
 import PasswordModal from './components/PasswordModal';
-import { initializeData } from './services/dataService';
+import { initializeData, getAdminPassword, setAdminPassword } from './services/dataService';
 import EducationProgramDetailPage from './pages/EducationProgramDetailPage';
+import BlogDetailPage from './pages/BlogDetailPage';
 import { auth } from './services/firebase';
-// FIX: Update Firebase imports for v8 compatibility to resolve module export errors.
-// FIX: Updated Firebase imports to use the v8 compatibility layer, which resolves module export errors for members like `User`.
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
+import { User, onAuthStateChanged } from 'firebase/auth';
 
 
 const App: React.FC = () => {
@@ -28,19 +26,17 @@ const App: React.FC = () => {
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<EducationProgram | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
-  // FIX: Use firebase.User type for v8 compatibility.
-  const [user, setUser] = useState<firebase.User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
+    // Initialize all data, including admin password if not set
     initializeData();
     
-    // FIX: Use auth.onAuthStateChanged method for v8 compatibility.
-    // This listener handles user state changes for all sign-in methods,
-    // including the popup flow.
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthInitialized(true);
     });
@@ -56,6 +52,7 @@ const App: React.FC = () => {
     setSelectedTour(null);
     setSelectedProject(null);
     setSelectedProgram(null);
+    setSelectedArticle(null);
     window.scrollTo(0, 0);
   }, []);
 
@@ -72,7 +69,7 @@ const App: React.FC = () => {
   }, [isAdmin, performNavigation]);
 
   const handlePasswordSubmit = (password: string) => {
-    if (password === 'admin') {
+    if (password === getAdminPassword()) {
       setIsAdmin(true);
       performNavigation('admin');
     } else {
@@ -99,6 +96,12 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const viewBlogDetail = useCallback((article: NewsArticle) => {
+    setSelectedArticle(article);
+    setCurrentPage('blog-detail');
+    window.scrollTo(0, 0);
+  }, []);
+
 
   const renderPage = () => {
     if (currentPage === 'tour-detail' && selectedTour) {
@@ -110,6 +113,9 @@ const App: React.FC = () => {
     if (currentPage === 'education-program-detail' && selectedProgram) {
         return <EducationProgramDetailPage program={selectedProgram} onBack={() => navigate('conservation')} />;
     }
+    if (currentPage === 'blog-detail' && selectedArticle) {
+        return <BlogDetailPage article={selectedArticle} onBack={() => navigate('blog')} />;
+    }
 
     switch (currentPage) {
       case 'home':
@@ -117,15 +123,15 @@ const App: React.FC = () => {
       case 'experiences':
         return <ExperiencesPage viewTourDetail={viewTourDetail} />;
       case 'mission':
-        return <MissionPage />;
+        return <MissionPage isAdmin={isAdmin} />;
       case 'conservation':
         return <ConservationPage viewProjectDetail={viewProjectDetail} viewProgramDetail={viewProgramDetail} />;
       case 'relief':
-        return <ReliefPage navigate={navigate} />;
+        return <ReliefPage navigate={navigate} user={user} />;
       case 'involved':
         return <GetInvolvedPage />;
       case 'blog':
-        return <BlogPage />;
+        return <BlogPage viewBlogDetail={viewBlogDetail} />;
       case 'contact':
         return <ContactPage />;
       case 'admin':

@@ -10,7 +10,7 @@ interface AdminFormProps {
 }
 
 const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) => {
-    const [formData, setFormData] = useState<any>({});
+    const [formData, setFormData] = useState<any>(item || {});
 
     const toInputDate = (dateString: string | undefined): string => {
         if (!dateString) return '';

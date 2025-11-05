@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 
 interface GoogleSignUpModalProps {
@@ -13,9 +14,8 @@ const GoogleSignUpModal: React.FC<GoogleSignUpModalProps> = ({ onClose }) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      // Reverted to signInWithPopup to fix environment compatibility issues.
-      // This method is better supported in this context than signInWithRedirect.
-      await auth.signInWithPopup(googleProvider);
+      // Use the modular signInWithPopup function from Firebase v9+.
+      await signInWithPopup(auth, googleProvider);
       onClose(); // Close modal on successful sign-in
     } catch (err: any) {
       console.error("Google sign-in error:", err);

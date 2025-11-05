@@ -1,5 +1,5 @@
 
-export type Page = 'home' | 'experiences' | 'mission' | 'conservation' | 'relief' | 'involved' | 'blog' | 'contact' | 'tour-detail' | 'admin' | 'project-detail' | 'education-program-detail';
+export type Page = 'home' | 'experiences' | 'mission' | 'conservation' | 'relief' | 'involved' | 'blog' | 'contact' | 'tour-detail' | 'admin' | 'project-detail' | 'education-program-detail' | 'blog-detail';
 
 export interface Tour {
   id: number | string;
@@ -20,7 +20,9 @@ export interface NewsArticle {
   id: number | string;
   title: string;
   excerpt: string;
+  content: string;
   imageUrl: string;
+  galleryImages: string[];
   category: 'Conservation' | 'Travel' | 'Relief Update';
   date: string;
 }
@@ -43,6 +45,29 @@ export interface Project {
     goals: string[];
     impactStats: { value: string; label: string }[];
     galleryImages: string[];
+}
+
+export interface VisionContent {
+    id: number | string;
+    title: string;
+    content: string;
+    imageUrl: string;
+}
+
+export interface HowWeHelpItem {
+    id: number | string;
+    title: string;
+    description: string;
+}
+
+export interface ReliefProject {
+    id: number | string;
+    title: string;
+    description: string;
+    status: 'active' | 'completed';
+    imageUrl: string;
+    goal: number;
+    raised: number;
 }
 
 export interface EducationProgram {
