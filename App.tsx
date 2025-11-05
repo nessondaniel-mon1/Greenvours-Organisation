@@ -18,8 +18,9 @@ import { initializeData } from './services/dataService';
 import EducationProgramDetailPage from './pages/EducationProgramDetailPage';
 import { auth } from './services/firebase';
 // FIX: Update Firebase imports for v8 compatibility to resolve module export errors.
-import firebase from 'firebase/app';
-import 'firebase/auth';
+// FIX: Updated Firebase imports to use the v8 compatibility layer, which resolves module export errors for members like `User`.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 
 
 const App: React.FC = () => {

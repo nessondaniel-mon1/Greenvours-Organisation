@@ -2,8 +2,9 @@ import React, { useState, FormEvent } from 'react';
 import { Page } from '../types';
 import GoogleSignUpModal from './GoogleSignUpModal';
 // FIX: Update Firebase imports for v8 compatibility to resolve module export errors.
-import firebase from 'firebase/app';
-import 'firebase/auth';
+// FIX: Updated Firebase imports to use the v8 compatibility layer, which resolves module export errors for members like `User`.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { auth } from '../services/firebase';
 
 interface FooterProps {
