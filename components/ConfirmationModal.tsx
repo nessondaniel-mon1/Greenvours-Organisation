@@ -6,9 +6,10 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  confirmButtonText?: string; // Add a new prop for the confirm button text
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message, confirmButtonText = 'Confirm' }) => {
   if (!isOpen) return null;
 
   return (
@@ -37,7 +38,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
             onClick={onConfirm}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded transition"
           >
-            Yes, Delete
+            {confirmButtonText}
           </button>
         </div>
       </div>

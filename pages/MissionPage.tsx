@@ -1,34 +1,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { TeamMember, VisionContent } from '../types';
-import { getTeam, getVisionContent, saveVisionContent } from '../services/dataService';
+import { getTeam, getVisionContent, updateItem } from '../services/dataService';
 import ImageUploader from '../components/ImageUploader';
 
-interface MissionPageProps {
-    isAdmin: boolean;
-}
-
-const MissionPage: React.FC<MissionPageProps> = ({ isAdmin }) => {
+const MissionPage: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [visionContent, setVisionContent] = useState<VisionContent | null>(null);
     const [isEditingImage, setIsEditingImage] = useState(false);
 
     useEffect(() => {
-        setTeamMembers(getTeam());
-        loadVisionContent();
+        const unsubTeam = getTeam(setTeamMembers);
+        const unsubVision = getVisionContent((content) => {
+            if (content.length > 0) {
+                setVisionContent(content[0]);
+            } else {
+                setVisionContent(null);
+            }
+        });
+
+        return () => {
+            unsubTeam();
+            unsubVision();
+        };
     }, []);
 
-    const loadVisionContent = () => {
-        const vision = getVisionContent();
-        if (vision.length > 0) {
-            setVisionContent(vision[0]); // Assuming there's only one vision content item
-        }
-    };
-
-    const handleImageUpload = (imageUrl: string) => {
+    const handleImageUpload = async (imageUrl: string) => {
         if (visionContent) {
             const updatedVisionContent = { ...visionContent, imageUrl };
-            saveVisionContent([updatedVisionContent]);
+            await updateItem('visionContent', updatedVisionContent.id as string, updatedVisionContent);
             setVisionContent(updatedVisionContent);
             setIsEditingImage(false);
         }

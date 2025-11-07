@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Page } from '../types';
 // FIX: Update Firebase imports for v8 compatibility to resolve module export errors.
 // FIX: Updated Firebase imports to use the v8 compatibility layer, which resolves module export errors for members like `User`.
@@ -11,6 +11,7 @@ interface HeaderProps {
   currentPage: Page;
   // FIX: Use firebase.User type for v8 compatibility.
   user: firebase.User | null;
+  isAdmin: boolean; // Add isAdmin prop
 }
 
 const NavLink: React.FC<{ page: Page; currentPage: Page; navigate: (page: Page) => void; children: React.ReactNode }> = ({ page, currentPage, navigate, children }) => {
@@ -27,8 +28,20 @@ const NavLink: React.FC<{ page: Page; currentPage: Page; navigate: (page: Page) 
   );
 };
 
-const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user }) => {
+const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user, isAdmin }) => { // Destructure isAdmin
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    // Cleanup function to ensure scrolling is re-enabled when component unmounts or isMenuOpen changes
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
 
   const handleLogout = async () => {
     try {
@@ -49,6 +62,7 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user }) => {
     { page: 'relief', label: 'Relief & Aid' },
     { page: 'blog', label: 'Blog' },
     { page: 'contact', label: 'Contact' },
+    ...(isAdmin ? [{ page: 'admin' as Page, label: 'Admin' }] : []), // Conditionally add Admin link
   ];
 
   return (
@@ -57,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user }) => {
         <div className="flex items-center justify-between h-20">
           <div className="flex-shrink-0">
             <button onClick={() => navigate('home')} className="text-2xl font-bold text-white tracking-wider">
-              GREENVOURS
+              <img src="/assets/logo.png" alt="Greenvours Logo" className="h-10 w-auto" />
             </button>
           </div>
           <nav className="hidden md:flex items-center space-x-1">
@@ -72,10 +86,10 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user }) => {
               <div className="flex items-center space-x-4">
                 <span className="text-white text-sm">Welcome, {user.displayName || user.email}</span>
                 <button
-                  onClick={handleLogout}
-                  className="bg-gray-600 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-700 transition-transform duration-200 hover:scale-105"
+                  onClick={() => navigate('involved')}
+                  className="bg-brand-accent text-brand-green font-bold py-2 px-4 rounded-full hover:bg-opacity-90 transition-transform duration-200 hover:scale-105"
                 >
-                  Logout
+                  Get Involved
                 </button>
               </div>
             ) : (
@@ -120,12 +134,12 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user }) => {
                  <p className="text-white text-base font-medium mb-2">Welcome, {user.displayName || user.email}</p>
                  <button
                     onClick={() => {
-                      handleLogout();
+                      navigate('involved');
                       setIsMenuOpen(false);
                     }}
-                    className="bg-gray-600 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-700 transition w-full mt-2"
+                    className="bg-brand-accent text-brand-green font-bold py-2 px-4 rounded-full hover:bg-opacity-90 transition w-full mt-2"
                   >
-                    Logout
+                    Get Involved
                   </button>
                </div>
             ) : (

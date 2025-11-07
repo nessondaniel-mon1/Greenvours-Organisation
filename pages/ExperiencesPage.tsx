@@ -54,7 +54,8 @@ const ExperiencesPage: React.FC<ExperiencesPageProps> = ({ viewTourDetail }) => 
     const [isFilterVisible, setIsFilterVisible] = useState(false);
 
     useEffect(() => {
-        setToursData(getTours());
+        const unsubscribe = getTours(setToursData);
+        return () => unsubscribe();
     }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

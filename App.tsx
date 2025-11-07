@@ -13,13 +13,11 @@ import ContactPage from './pages/ContactPage';
 import TourDetailPage from './pages/TourDetailPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import AdminPage from './pages/AdminPage';
-import PasswordModal from './components/PasswordModal';
-import { initializeData, getAdminPassword, setAdminPassword } from './services/dataService';
+import { initializeData } from './services/dataService';
 import EducationProgramDetailPage from './pages/EducationProgramDetailPage';
 import BlogDetailPage from './pages/BlogDetailPage';
-import { auth } from './services/firebase';
+import { auth, checkAdminStatus } from './services/firebase'; // Import checkAdminStatus
 import { User, onAuthStateChanged } from 'firebase/auth';
-
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -27,80 +25,123 @@ const App: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<EducationProgram | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // New state for admin status
   const [authInitialized, setAuthInitialized] = useState(false);
 
+  // State to manage navigation history
+  const [historyStack, setHistoryStack] = useState<{ page: Page; tour: Tour | null; project: Project | null; program: EducationProgram | null; article: NewsArticle | null }[]>([]);
+
   useEffect(() => {
-    // Initialize all data, including admin password if not set
-    initializeData();
-    
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => { // Make callback async
       setUser(currentUser);
+      if (currentUser) {
+        const admin = await checkAdminStatus(currentUser);
+        setIsAdmin(admin);
+        if (admin) {
+          // Initialize all data (now populates Firestore if empty) only if admin
+          initializeData();
+        }
+      } else {
+        setIsAdmin(false);
+      }
       setAuthInitialized(true);
     });
+
+    // Initialize history with the home page if not already set
+    if (window.history.state === null || window.history.state.page === undefined) {
+      const initialState = { page: 'home', tour: null, project: null, program: null, article: null };
+      window.history.replaceState(initialState, '', '/');
+      setHistoryStack([initialState]);
+    }
+
     return () => unsubscribe();
   }, []);
 
-  const performNavigation = useCallback((targetPage: Page) => {
-    // If navigating away from the admin page, reset admin status for security.
-    if (targetPage !== 'admin') {
-      setIsAdmin(false);
-    }
+  // Handle browser's back/forward buttons
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && state.page) {
+        setCurrentPage(state.page);
+        setSelectedTour(state.tour || null);
+        setSelectedProject(state.project || null);
+        setSelectedProgram(state.program || null);
+        setSelectedArticle(state.article || null);
+        // Update historyStack to reflect the browser's history
+        setHistoryStack(prev => {
+          const index = prev.findIndex(item => 
+            item.page === state.page && 
+            item.tour?.id === state.tour?.id && 
+            item.project?.id === state.project?.id && 
+            item.program?.id === state.program?.id && 
+            item.article?.id === state.article?.id
+          );
+          return index !== -1 ? prev.slice(0, index + 1) : [state];
+        });
+      } else {
+        // Default to home if no state is found (e.g., initial load or external navigation)
+        setCurrentPage('home');
+        setSelectedTour(null);
+        setSelectedProject(null);
+        setSelectedProgram(null);
+        setSelectedArticle(null);
+        setHistoryStack([{ page: 'home', tour: null, project: null, program: null, article: null }]);
+      }
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []); // Empty dependency array to ensure it only runs once
+
+ const performNavigation = useCallback((targetPage: Page, tour: Tour | null = null, project: Project | null = null, program: EducationProgram | null = null, article: NewsArticle | null = null) => {
     setCurrentPage(targetPage);
-    setSelectedTour(null);
-    setSelectedProject(null);
-    setSelectedProgram(null);
-    setSelectedArticle(null);
+    setSelectedTour(tour);
+    setSelectedProject(project);
+    setSelectedProgram(program);
+    setSelectedArticle(article);
     window.scrollTo(0, 0);
+
+    // Construct a more descriptive URL
+    let path = `/${targetPage}`;
+    if (tour) path = `/experiences/${tour.id}`;
+    else if (project) path = `/conservation/${project.id}`;
+    else if (program) path = `/conservation/program/${program.id}`;
+    else if (article) path = `/blog/${article.id}`;
+
+    const newState = { page: targetPage, tour, project, program, article };
+    window.history.pushState(newState, '', path);
+    setHistoryStack(prev => [...prev, newState]);
   }, []);
 
   const navigate = useCallback((page: Page) => {
     if (page === 'admin') {
-      if (isAdmin) {
+      if (user) { // Check if user is logged in for admin access
         performNavigation('admin');
       } else {
-        setIsPasswordModalVisible(true);
+        alert('Please log in to access the admin panel.'); // Or redirect to login
       }
     } else {
       performNavigation(page);
     }
-  }, [isAdmin, performNavigation]);
-
-  const handlePasswordSubmit = (password: string) => {
-    if (password === getAdminPassword()) {
-      setIsAdmin(true);
-      performNavigation('admin');
-    } else {
-      alert('Incorrect password.');
-    }
-    setIsPasswordModalVisible(false);
-  };
+  }, [user, performNavigation]);
 
   const viewTourDetail = useCallback((tour: Tour) => {
-    setSelectedTour(tour);
-    setCurrentPage('tour-detail');
-    window.scrollTo(0, 0);
-  }, []);
+    performNavigation('tour-detail', tour);
+  }, [performNavigation]);
 
   const viewProjectDetail = useCallback((project: Project) => {
-    setSelectedProject(project);
-    setCurrentPage('project-detail');
-    window.scrollTo(0, 0);
-  }, []);
+    performNavigation('project-detail', null, project);
+  }, [performNavigation]);
 
   const viewProgramDetail = useCallback((program: EducationProgram) => {
-    setSelectedProgram(program);
-    setCurrentPage('education-program-detail');
-    window.scrollTo(0, 0);
-  }, []);
+    performNavigation('education-program-detail', null, null, program);
+  }, [performNavigation]);
 
   const viewBlogDetail = useCallback((article: NewsArticle) => {
-    setSelectedArticle(article);
-    setCurrentPage('blog-detail');
-    window.scrollTo(0, 0);
-  }, []);
+    performNavigation('blog-detail', null, null, null, article);
+  }, [performNavigation]);
 
 
   const renderPage = () => {
@@ -151,17 +192,11 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-900 text-gray-300 font-sans">
-      <Header navigate={navigate} currentPage={currentPage} user={user} />
+      <Header navigate={navigate} currentPage={currentPage} user={user} isAdmin={isAdmin} />
       <main className="pt-20">
         {renderPage()}
       </main>
-      <Footer navigate={navigate} user={user} />
-      {isPasswordModalVisible && (
-        <PasswordModal 
-          onSubmit={handlePasswordSubmit}
-          onCancel={() => setIsPasswordModalVisible(false)}
-        />
-      )}
+      <Footer navigate={navigate} user={user} isAdmin={isAdmin} />
     </div>
   );
 };

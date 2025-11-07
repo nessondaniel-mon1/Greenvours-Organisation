@@ -12,8 +12,13 @@ const ConservationPage: React.FC<ConservationPageProps> = ({ viewProjectDetail, 
     const [educationPrograms, setEducationPrograms] = useState<EducationProgram[]>([]);
 
     useEffect(() => {
-        setProjects(getProjects());
-        setEducationPrograms(getEducationPrograms());
+        const unsubProjects = getProjects(setProjects);
+        const unsubEducationPrograms = getEducationPrograms(setEducationPrograms);
+
+        return () => {
+            unsubProjects();
+            unsubEducationPrograms();
+        };
     }, []);
 
     return (

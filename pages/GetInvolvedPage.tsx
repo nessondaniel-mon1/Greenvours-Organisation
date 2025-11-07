@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { sendNotificationEmail } from '../services/dataService';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../services/firebase';
 
 type Tab = 'donate' | 'volunteer' | 'partner';
 
@@ -8,7 +10,8 @@ const DonateForm: React.FC = () => {
     const [customAmount, setCustomAmount] = useState('');
     const [frequency, setFrequency] = useState<'one-time' | 'monthly'>('one-time');
     const [showPaymentMethods, setShowPaymentMethods] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
+    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+    const [loadingCheckout, setLoadingCheckout] = useState(false);
 
     const amounts = ['50000', '100000', '250000', '500000'];
     const currentAmount = selectedAmount || customAmount;
@@ -25,35 +28,61 @@ const DonateForm: React.FC = () => {
         setSelectedAmount(null);
     };
     
-    const handleProceed = () => {
-        if (isAmountSelected) {
-            setShowPaymentMethods(true);
+    const handleProceed = async () => {
+        if (!isAmountSelected) return;
+
+        setLoadingCheckout(true);
+        setPaymentStatus('processing');
+        try {
+            const createStripeCheckoutSessionFn = httpsCallable(functions, 'createStripeCheckoutSession');
+            const amountInCents = parseFloat(currentAmount!) * 100; // Stripe expects amount in cents
+
+            const response = await createStripeCheckoutSessionFn({
+                amount: amountInCents,
+                currency: 'UGX',
+                productName: `Greenvours Donation (${frequency})`,
+                successUrl: window.location.origin + '/get-involved?payment=success',
+                cancelUrl: window.location.origin + '/get-involved?payment=cancelled',
+            });
+
+            const { sessionId } = response.data as { sessionId: string };
+
+            // Redirect to Stripe Checkout
+            window.location.href = `https://checkout.stripe.com/pay/${sessionId}`;
+
+        } catch (error) {
+            console.error('Error creating Stripe checkout session:', error);
+            alert('There was a problem initiating payment. Please try again.');
+            setPaymentStatus('error');
+        } finally {
+            setLoadingCheckout(false);
         }
     };
 
-    const handlePayment = async (method: 'Mobile Money' | 'Card') => {
-        if (!currentAmount) return;
-        setPaymentStatus('processing');
-        try {
-            const subject = `New Donation: UGX ${parseFloat(currentAmount).toLocaleString()}`;
-            const htmlBody = `
-                <h1>🎉 New Donation Received!</h1>
-                <p>Details of the donation:</p>
-                <ul>
-                    <li><strong>Amount:</strong> UGX ${parseFloat(currentAmount).toLocaleString()}</li>
-                    <li><strong>Frequency:</strong> ${frequency}</li>
-                    <li><strong>Payment Method:</strong> ${method}</li>
-                </ul>
-                <p>Please verify the transaction in the payment processor's dashboard.</p>
-            `;
-            await sendNotificationEmail({ subject, htmlBody });
-            setPaymentStatus('success');
-        } catch (error) {
-            console.error('Failed to send donation notification:', error);
-            alert('There was a problem processing your donation. Please try again.');
-            setPaymentStatus('idle');
-        }
-    };
+    // This function is no longer needed as payment is handled by Stripe redirect
+    // const handlePayment = async (method: 'Mobile Money' | 'Card') => {
+    //     if (!currentAmount) return;
+    //     setPaymentStatus('processing');
+    //     try {
+    //         const subject = `New Donation: UGX ${parseFloat(currentAmount).toLocaleString()}`;
+    //         const htmlBody = `
+    //             <h1>🎉 New Donation Received!</h1>
+    //             <p>Details of the donation:</p>
+    //             <ul>
+    //                 <li><strong>Amount:</strong> UGX ${parseFloat(currentAmount).toLocaleString()}</li>
+    //                 <li><strong>Frequency:</strong> ${frequency}</li>
+    //                 <li><strong>Payment Method:</strong> ${method}</li>
+    //             </ul>
+    //             <p>Please verify the transaction in the payment processor's dashboard.</p>
+    //         `;
+    //         await sendNotificationEmail({ subject, htmlBody });
+    //         setPaymentStatus('success');
+    //     } catch (error) {
+    //         console.error('Failed to send donation notification:', error);
+    //         alert('There was a problem processing your donation. Please try again.');
+    //         setPaymentStatus('idle');
+    //     }
+    // };
 
     if (paymentStatus === 'success') {
         return (
@@ -76,44 +105,64 @@ const DonateForm: React.FC = () => {
         );
     }
 
-    if (showPaymentMethods) {
+    if (paymentStatus === 'error') {
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-white">Complete Your Donation</h3>
-                    <button onClick={() => setShowPaymentMethods(false)} className="text-sm text-gray-400 hover:text-white">&larr; Back</button>
-                </div>
-                <div className="bg-gray-700 p-4 rounded-lg text-center">
-                    <p className="text-gray-300">You are donating</p>
-                    <p className="text-3xl font-bold text-brand-accent my-1">
-                        UGX {parseFloat(currentAmount!).toLocaleString()}
-                    </p>
-                    <p className="text-gray-300 capitalize">{frequency.replace('-', ' ')}</p>
-                </div>
-
-                <div>
-                    <label className="block text-lg font-semibold text-gray-200 mb-3">Choose Payment Method</label>
-                    <div className="space-y-4">
-                        <button 
-                            onClick={() => handlePayment('Mobile Money')}
-                            disabled={paymentStatus === 'processing'}
-                            className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition disabled:opacity-50 disabled:cursor-wait">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                            {paymentStatus === 'processing' ? 'Processing...' : 'Mobile Money'}
-                        </button>
-                         <button 
-                            onClick={() => handlePayment('Card')}
-                            disabled={paymentStatus === 'processing'}
-                            className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition disabled:opacity-50 disabled:cursor-wait">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                            {paymentStatus === 'processing' ? 'Processing...' : 'Credit / Debit Card'}
-                        </button>
-                    </div>
-                </div>
-                <p className="text-xs text-center text-gray-400">Secure payments processed by our partners.</p>
+            <div className="flex flex-col items-center justify-center h-full text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <h2 className="text-2xl font-bold text-white mb-4">Payment Failed</h2>
+                <p className="text-gray-300 mb-6">There was an issue processing your donation. Please try again.</p>
+                <button
+                    onClick={() => {
+                        setPaymentStatus('idle');
+                        setLoadingCheckout(false);
+                    }}
+                    className="w-full bg-brand-green text-white font-bold py-3 px-4 rounded-lg hover:bg-brand-light-green transition text-lg"
+                >
+                    Try Again
+                </button>
             </div>
         );
     }
+
+    // The payment method selection is now handled by Stripe Checkout
+    // if (showPaymentMethods) {
+    //     return (
+    //         <div className="space-y-6">
+    //             <div className="flex items-center justify-between">
+    //                 <h3 className="text-2xl font-bold text-white">Complete Your Donation</h3>
+    //                 <button onClick={() => setShowPaymentMethods(false)} className="text-sm text-gray-400 hover:text-white">&larr; Back</button>
+    //             </div>
+    //             <div className="bg-gray-700 p-4 rounded-lg text-center">
+    //                 <p className="text-gray-300">You are donating</p>
+    //                 <p className="text-3xl font-bold text-brand-accent my-1">
+    //                     UGX {parseFloat(currentAmount!).toLocaleString()}
+    //                 </p>
+    //                 <p className="text-gray-300 capitalize">{frequency.replace('-', ' ')}</p>
+    //             </div>
+
+    //             <div>
+    //                 <label className="block text-lg font-semibold text-gray-200 mb-3">Choose Payment Method</label>
+    //                 <div className="space-y-4">
+    //                     <button 
+    //                         onClick={() => handlePayment('Mobile Money')}
+    //                         disabled={paymentStatus === 'processing'}
+    //                         className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition disabled:opacity-50 disabled:cursor-wait">
+    //                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+    //                         {paymentStatus === 'processing' ? 'Processing...' : 'Mobile Money'}
+    //                     </button>
+    //                      <button 
+    //                         onClick={() => handlePayment('Card')}
+    //                         disabled={paymentStatus === 'processing'}
+    //                         className="w-full flex items-center justify-center p-4 border border-gray-600 rounded-lg text-center font-bold text-lg text-white hover:bg-brand-light-green hover:border-brand-light-green transition disabled:opacity-50 disabled:cursor-wait">
+    //                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+    //                         {paymentStatus === 'processing' ? 'Processing...' : 'Credit / Debit Card'}
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //             <p className="text-xs text-center text-gray-400">Secure payments processed by our partners.</p>
+    //         </div>
+    //     );
+    // }
     
     return (
         <div className="space-y-6">
@@ -182,10 +231,10 @@ const DonateForm: React.FC = () => {
             </div>
             <button 
                 onClick={handleProceed}
-                disabled={!isAmountSelected}
+                disabled={!isAmountSelected || loadingCheckout}
                 className="w-full bg-brand-green text-white font-bold py-4 px-4 rounded-lg hover:bg-brand-light-green transition text-xl disabled:bg-gray-600 disabled:cursor-not-allowed"
             >
-                Proceed to Payment
+                {loadingCheckout ? 'Redirecting to Stripe...' : 'Proceed to Payment'}
             </button>
             <p className="text-xs text-center text-gray-400">100% of your donation goes to our programs.</p>
         </div>

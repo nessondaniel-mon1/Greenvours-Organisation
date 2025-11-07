@@ -13,8 +13,13 @@ const ReliefPage: React.FC<ReliefPageProps> = ({ navigate, user }) => {
     const [howWeHelpItems, setHowWeHelpItems] = useState<HowWeHelpItem[]>([]);
 
     useEffect(() => {
-        setReliefProjects(getReliefProjects());
-        setHowWeHelpItems(getHowWeHelpItems());
+        const unsubReliefProjects = getReliefProjects(setReliefProjects);
+        const unsubHowWeHelpItems = getHowWeHelpItems(setHowWeHelpItems);
+
+        return () => {
+            unsubReliefProjects();
+            unsubHowWeHelpItems();
+        };
     }, []);
 
     return (

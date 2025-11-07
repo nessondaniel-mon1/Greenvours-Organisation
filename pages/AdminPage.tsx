@@ -6,11 +6,11 @@ import EditBlogPostForm from '../components/EditBlogPostForm';
 import EditReliefProjectForm from '../components/EditReliefProjectForm';
 import EditHowWeHelpItemForm from '../components/EditHowWeHelpItemForm';
 import EditVisionContentForm from '../components/EditVisionContentForm';
+import EditContactInfoForm from '../components/EditContactInfoForm';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
-import ChangePasswordModal from '../components/ChangePasswordModal';
 
-type ContentType = 'tours' | 'team' | 'projects' | 'news' | 'educationPrograms' | 'reliefProjects' | 'howWeHelpItems' | 'visionContent';
+type ContentType = 'tours' | 'team' | 'projects' | 'news' | 'educationPrograms' | 'reliefProjects' | 'howWeHelpItems' | 'visionContent' | 'contactInfo';
 type ContentItem = Tour | TeamMember | Project | NewsArticle | EducationProgram | ReliefProject | HowWeHelpItem | VisionContent;
 
 const AdminPage: React.FC = () => {
@@ -30,26 +30,31 @@ const AdminPage: React.FC = () => {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<{id: number | string, type: ContentType} | null>(null);
 
-    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
-
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
     const pageTopRef = useRef<HTMLHeadingElement>(null);
 
     useEffect(() => {
-        loadAllData();
-    }, []);
+        const unsubTours = dataService.getTours(setTours);
+        const unsubTeam = dataService.getTeam(setTeam);
+        const unsubProjects = dataService.getProjects(setProjects);
+        const unsubNews = dataService.getNews(setNews);
+        const unsubEducationPrograms = dataService.getEducationPrograms(setEducationPrograms);
+        const unsubReliefProjects = dataService.getReliefProjects(setReliefProjects);
+        const unsubHowWeHelpItems = dataService.getHowWeHelpItems(setHowWeHelpItems);
+        const unsubVisionContent = dataService.getVisionContent(setVisionContent);
 
-    const loadAllData = () => {
-        setTours(dataService.getTours());
-        setTeam(dataService.getTeam());
-        setProjects(dataService.getProjects());
-        setNews(dataService.getNews());
-        setEducationPrograms(dataService.getEducationPrograms());
-        setReliefProjects(dataService.getReliefProjects());
-        setHowWeHelpItems(dataService.getHowWeHelpItems());
-        setVisionContent(dataService.getVisionContent());
-    };
+        return () => {
+            unsubTours();
+            unsubTeam();
+            unsubProjects();
+            unsubNews();
+            unsubEducationPrograms();
+            unsubReliefProjects();
+            unsubHowWeHelpItems();
+            unsubVisionContent();
+        };
+    }, []);
 
     const handleEdit = (item: ContentItem, type: ContentType) => {
         setEditingItem(item);
@@ -70,12 +75,10 @@ const AdminPage: React.FC = () => {
         setIsConfirmModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (itemToDelete) {
             try {
-                const key = dataService.DATA_KEYS[itemToDelete.type.replace(/([A-Z])/g, '_$1').toUpperCase() as keyof typeof dataService.DATA_KEYS];
-                dataService.deleteItem(key, itemToDelete.id);
-                loadAllData();
+                await dataService.deleteItem(itemToDelete.type, itemToDelete.id as string);
                 showToast('Item deleted successfully', 'success');
             } catch (error) {
                 showToast('Failed to delete item', 'error');
@@ -89,17 +92,15 @@ const AdminPage: React.FC = () => {
         setItemToDelete(null);
     };
     
-    const handleSave = (item: Omit<ContentItem, 'id'> | ContentItem) => {
+    const handleSave = async (item: Omit<ContentItem, 'id'> | ContentItem) => {
         if (!editingType) return;
         
         try {
-            const key = dataService.DATA_KEYS[editingType.replace(/([A-Z])/g, '_$1').toUpperCase() as keyof typeof dataService.DATA_KEYS];
             if ('id' in item && item.id) {
-                dataService.updateItem(key, item as ContentItem);
+                await dataService.updateItem(editingType, item.id as string, item as Omit<ContentItem, 'id'>);
             } else {
-                dataService.addItem(key, item);
+                await dataService.addItem(editingType, item);
             }
-            loadAllData();
             showToast('Item saved successfully', 'success');
         } catch (error) {
             showToast('Failed to save item', 'error');
@@ -111,16 +112,6 @@ const AdminPage: React.FC = () => {
         setIsFormVisible(false);
         setEditingItem(null);
         setEditingType(null);
-    };
-
-    const handleChangePassword = (oldPassword: string, newPassword: string) => {
-        if (oldPassword === dataService.getAdminPassword()) {
-            dataService.setAdminPassword(newPassword);
-            showToast('Admin password changed successfully', 'success');
-            setIsChangePasswordModalOpen(false);
-        } else {
-            showToast('Incorrect old password', 'error');
-        }
     };
 
     const showToast = (message: string, type: 'success' | 'error') => {
@@ -161,21 +152,6 @@ const AdminPage: React.FC = () => {
                 message="Are you sure you want to delete this item? This action cannot be undone."
             />
 
-            <ChangePasswordModal
-                isOpen={isChangePasswordModalOpen}
-                onClose={() => setIsChangePasswordModalOpen(false)}
-                onSubmit={handleChangePassword}
-            />
-
-            <div className="flex justify-end mb-6">
-                <button 
-                    onClick={() => setIsChangePasswordModalOpen(true)}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition"
-                >
-                    Change Admin Password
-                </button>
-            </div>
-
             {isFormVisible && editingType ? (
                 editingType === 'news' ? (
                     <EditBlogPostForm 
@@ -198,6 +174,11 @@ const AdminPage: React.FC = () => {
                 ) : editingType === 'visionContent' ? (
                     <EditVisionContentForm
                         item={editingItem as VisionContent}
+                        onSave={handleSave}
+                        onCancel={closeForm}
+                    />
+                ) : editingType === 'contactInfo' ? (
+                    <EditContactInfoForm
                         onSave={handleSave}
                         onCancel={closeForm}
                     />
@@ -283,6 +264,14 @@ const AdminPage: React.FC = () => {
                         ) : (
                             <p className="text-gray-400">No Vision Content found. Please add one.</p>
                         )}
+                    </div>
+
+                    <div className="bg-gray-800 p-6 rounded-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold text-white">Manage Contact Information</h2>
+                            <button onClick={() => handleAddNew('contactInfo')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Edit Contact Info</button>
+                        </div>
+                        <p className="text-gray-400">Edit the organization's contact details and map image.</p>
                     </div>
                 </div>
             )}

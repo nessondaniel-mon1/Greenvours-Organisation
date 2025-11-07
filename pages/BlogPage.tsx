@@ -11,7 +11,8 @@ const BlogPage: React.FC<BlogPageProps> = ({ viewBlogDetail }) => {
     const [blogPosts, setBlogPosts] = useState<NewsArticle[]>([]);
 
     useEffect(() => {
-        setBlogPosts(getNews());
+        const unsubscribe = getNews(setBlogPosts);
+        return () => unsubscribe();
     }, []);
 
     return (

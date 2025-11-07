@@ -74,7 +74,8 @@ const NewsSection: React.FC<HomePageProps> = ({ navigate }) => {
     const [newsData, setNewsData] = useState<NewsArticle[]>([]);
 
     useEffect(() => {
-        setNewsData(getNews().slice(0, 3)); // Get latest 3 articles
+        const unsubscribe = getNews(setNewsData);
+        return () => unsubscribe();
     }, []);
 
     return (

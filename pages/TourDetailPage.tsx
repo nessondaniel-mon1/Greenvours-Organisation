@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Tour } from '../types';
-import { getTours, sendNotificationEmail } from '../services/dataService';
+import { getTours } from '../services/dataService';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../services/firebase';
 
 interface TourDetailPageProps {
   tour: Tour;
@@ -9,34 +11,43 @@ interface TourDetailPageProps {
 
 const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
     const [detailedTour, setDetailedTour] = useState<Tour | null>(null);
+    const [loadingBooking, setLoadingBooking] = useState(false);
 
     useEffect(() => {
-        const allTours = getTours();
-        const foundTour = allTours.find(t => t.id === tour.id);
-        setDetailedTour(foundTour || tour);
+        const unsubscribe = getTours((tours: Tour[]) => {
+            const foundTour = tours.find(t => t.id === tour.id);
+            setDetailedTour(foundTour || tour);
+        });
+
+        return () => unsubscribe(); // Clean up the subscription
     }, [tour]);
 
     const handleBooking = async () => {
         if (!detailedTour) return;
-        if (window.confirm(`Are you sure you want to request a booking for "${detailedTour.title}"? Our team will contact you to finalize the details.`)) {
-            try {
-                const subject = `New Booking Inquiry: ${detailedTour.title}`;
-                const htmlBody = `
-                    <h1>New Booking Inquiry</h1>
-                    <p>A user has expressed interest in booking the following tour:</p>
-                    <ul>
-                        <li><strong>Tour:</strong> ${detailedTour.title}</li>
-                        <li><strong>Price:</strong> UGX ${detailedTour.price.toLocaleString()}</li>
-                        <li><strong>Duration:</strong> ${detailedTour.duration} days</li>
-                    </ul>
-                    <p>Please follow up with them to complete the booking process. Note: This is an automated inquiry; user contact details were not collected at this stage.</p>
-                `;
-                await sendNotificationEmail({ subject, htmlBody });
-                alert('Your booking request has been sent! Our team will be in touch with you shortly to confirm the details. Thank you!');
-            } catch (error) {
-                console.error("Failed to send booking notification:", error);
-                alert("Sorry, we couldn't process your booking request at the moment. Please try again later.");
-            }
+
+        setLoadingBooking(true);
+        try {
+            const createStripeCheckoutSessionFn = httpsCallable(functions, 'createStripeCheckoutSession');
+            const amountInCents = detailedTour.price * 100; // Stripe expects amount in cents
+
+            const response = await createStripeCheckoutSessionFn({
+                amount: amountInCents,
+                currency: 'UGX',
+                productName: `Tour Booking: ${detailedTour.title}`,
+                successUrl: window.location.origin + '/experiences?payment=success',
+                cancelUrl: window.location.origin + '/experiences?payment=cancelled',
+            });
+
+            const { sessionId } = response.data as { sessionId: string };
+
+            // Redirect to Stripe Checkout
+            window.location.href = `https://checkout.stripe.com/pay/${sessionId}`;
+
+        } catch (error) {
+            console.error('Error creating Stripe checkout session:', error);
+            alert('There was a problem initiating your booking. Please try again.');
+        } finally {
+            setLoadingBooking(false);
         }
     };
 
@@ -101,8 +112,12 @@ const TourDetailPage: React.FC<TourDetailPageProps> = ({ tour, onBack }) => {
                                 <li className="flex items-center"><span className="text-brand-accent mr-2">&#10003;</span> Most Meals</li>
                             </ul>
 
-                             <button onClick={handleBooking} className="w-full bg-brand-accent text-brand-green font-bold py-3 px-4 rounded-full hover:bg-opacity-90 transition mt-8 text-lg">
-                                Request to Book
+                             <button 
+                                onClick={handleBooking} 
+                                disabled={loadingBooking}
+                                className="w-full bg-brand-accent text-brand-green font-bold py-3 px-4 rounded-full hover:bg-opacity-90 transition mt-8 text-lg disabled:bg-gray-600 disabled:cursor-not-allowed"
+                            >
+                                {loadingBooking ? 'Processing...' : 'Request to Book'}
                             </button>
                             <p className="text-xs text-center text-gray-500 mt-2">Secure booking via Stripe.</p>
 

@@ -1,6 +1,16 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { sendNotificationEmail } from '../services/dataService';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { COLLECTIONS } from '../services/dataService';
+
+interface ContactInfo {
+  bookingEmail: string;
+  generalEmail: string;
+  address: string;
+  imageUrl: string;
+}
 
 const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -12,6 +22,42 @@ const ContactPage: React.FC = () => {
     const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
     const [geminiResponse, setGeminiResponse] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+    const [loadingContactInfo, setLoadingContactInfo] = useState(true);
+
+    useEffect(() => {
+        const fetchContactInfo = async () => {
+            console.time("fetchContactInfo"); // Start timer
+            try {
+                const docRef = doc(db, COLLECTIONS.CONTACT_INFO, 'main');
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setContactInfo(docSnap.data() as ContactInfo);
+                } else {
+                    // Default values if no document exists
+                    setContactInfo({
+                        bookingEmail: 'bookings@greenvours.org',
+                        generalEmail: 'info@greenvours.org',
+                        address: 'HM Plaza <br/>Kawempe, Kampala<br/>Uganda',
+                        imageUrl: 'https://picsum.photos/seed/ugmap/600/300',
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching contact info:", err);
+                // Fallback to default values on error
+                setContactInfo({
+                    bookingEmail: 'bookings@greenvours.org',
+                    generalEmail: 'info@greenvours.org',
+                    address: 'HM Plaza <br/>Kawempe, Kampala<br/>Uganda',
+                    imageUrl: 'https://picsum.photos/seed/ugmap/600/300',
+                });
+            } finally {
+                setLoadingContactInfo(false);
+                console.timeEnd("fetchContactInfo"); // End timer
+            }
+        };
+        fetchContactInfo();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
@@ -152,6 +198,14 @@ const ContactPage: React.FC = () => {
     }
 
 
+    if (loadingContactInfo) {
+        return (
+            <div className="bg-gray-900 min-h-screen flex items-center justify-center">
+                <p className="text-white text-lg">Loading contact information...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-gray-900 min-h-screen">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -169,19 +223,19 @@ const ContactPage: React.FC = () => {
                          <div>
                             <h3 className="text-xl font-bold text-white mb-2">Booking Inquiries</h3>
                             <p className="text-gray-300">For questions about our tours or to request a custom trip:</p>
-                            <a href="mailto:bookings@greenvours.org" className="text-brand-accent font-semibold hover:text-yellow-300">bookings@greenvours.org</a>
+                            <a href={`mailto:${contactInfo?.bookingEmail}`} className="text-brand-accent font-semibold hover:text-yellow-300">{contactInfo?.bookingEmail}</a>
                         </div>
                          <div>
                             <h3 className="text-xl font-bold text-white mb-2">General Inquiries</h3>
                             <p className="text-gray-300">For all other questions:</p>
-                             <a href="mailto:info@greenvours.org" className="text-brand-accent font-semibold hover:text-yellow-300">info@greenvours.org</a>
+                             <a href={`mailto:${contactInfo?.generalEmail}`} className="text-brand-accent font-semibold hover:text-yellow-300">{contactInfo?.generalEmail}</a>
                         </div>
                          <div>
                             <h3 className="text-xl font-bold text-white mb-2">Our Address</h3>
-                            <p className="text-gray-300">HM Plaza <br/>Kawempe, Kampala<br/>Uganda</p>
+                            <p className="text-gray-300" dangerouslySetInnerHTML={{ __html: contactInfo?.address || '' }}></p>
                         </div>
                         <div>
-                             <img src="https://picsum.photos/seed/ugmap/600/300" alt="Map" className="rounded-lg shadow-md w-full h-48 object-cover"/>
+                             <img src={contactInfo?.imageUrl} alt="Map" className="rounded-lg shadow-md w-full h-48 object-cover"/>
                         </div>
                     </div>
 
