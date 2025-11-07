@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ navigate, currentPage, user, isAdmin })
         <div className="flex items-center justify-between h-20">
           <div className="flex-shrink-0">
             <button onClick={() => navigate('home')} className="text-2xl font-bold text-white tracking-wider">
-              <img src="/assets/logo.png" alt="Greenvours Logo" className="h-10 w-auto" />
+              <img src="/logo.png" alt="Greenvours Logo" className="h-10 w-auto" />
             </button>
           </div>
           <nav className="hidden md:flex items-center space-x-1">

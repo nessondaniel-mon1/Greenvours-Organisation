@@ -75,29 +75,12 @@ const AdminPage: React.FC = () => {
         setIsConfirmModalOpen(true);
     };
 
-    const confirmDelete = async () => {
-        if (itemToDelete) {
-            try {
-                await dataService.deleteItem(itemToDelete.type, itemToDelete.id as string);
-                showToast('Item deleted successfully', 'success');
-            } catch (error) {
-                showToast('Failed to delete item', 'error');
-            }
-            closeConfirmModal();
-        }
-    };
-
-    const closeConfirmModal = () => {
-        setIsConfirmModalOpen(false);
-        setItemToDelete(null);
-    };
-    
     const handleSave = async (item: Omit<ContentItem, 'id'> | ContentItem) => {
         if (!editingType) return;
         
         try {
             if ('id' in item && item.id) {
-                await dataService.updateItem(editingType, item.id as string, item as Omit<ContentItem, 'id'>);
+                await dataService.updateItem(editingType, String(item.id), item as Omit<ContentItem, 'id'>);
             } else {
                 await dataService.addItem(editingType, item);
             }
@@ -106,6 +89,23 @@ const AdminPage: React.FC = () => {
             showToast('Failed to save item', 'error');
         }
         closeForm();
+    };
+
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false);
+        setItemToDelete(null);
+    };
+    
+    const confirmDelete = async () => {
+        if (itemToDelete) {
+            try {
+                await dataService.deleteItem(itemToDelete.type, String(itemToDelete.id));
+                showToast('Item deleted successfully', 'success');
+            } catch (error) {
+                showToast('Failed to delete item', 'error');
+            }
+            closeConfirmModal();
+        }
     };
 
     const closeForm = () => {

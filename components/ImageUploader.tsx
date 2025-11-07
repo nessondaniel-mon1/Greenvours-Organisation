@@ -1,16 +1,4 @@
-import React, { useState } from 'react';
-
-// A predefined list of high-quality stock images for the gallery
-const GALLERY_IMAGES = [
-    'https://picsum.photos/seed/gallery1/600/400',
-    'https://picsum.photos/seed/gallery2/600/400',
-    'https://picsum.photos/seed/gallery3/600/400',
-    'https://picsum.photos/seed/gallery4/600/400',
-    'https://picsum.photos/seed/gallery5/600/400',
-    'https://picsum.photos/seed/gallery6/600/400',
-    'https://picsum.photos/seed/gallery7/600/400',
-    'https://picsum.photos/seed/gallery8/600/400',
-];
+import React, { useState, useRef } from 'react';
 
 interface ImageUploaderProps {
     currentImageUrl: string;
@@ -18,23 +6,56 @@ interface ImageUploaderProps {
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImageUrl, onImageUrlChange }) => {
-    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                onImageUrlChange(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+    const CLOUDINARY_CLOUD_NAME = process.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const CLOUDINARY_UPLOAD_PRESET = process.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    const uploadImageToCloudinary = async (file: File): Promise<string> => {
+        if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+            throw new Error("Cloudinary credentials are not set in environment variables.");
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || "Cloudinary upload failed.");
+            }
+
+            const data = await response.json();
+            return data.secure_url;
+        } catch (error) {
+            console.error("Error uploading image to Cloudinary:", error);
+            throw error;
         }
     };
 
-    const handleGallerySelect = (url: string) => {
-        onImageUrlChange(url);
-        setIsGalleryOpen(false);
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setIsUploading(true);
+            try {
+                const downloadURL = await uploadImageToCloudinary(file);
+                onImageUrlChange(downloadURL);
+            } catch (error: any) {
+                alert(error.message); // Provide user feedback
+            } finally {
+                setIsUploading(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = ''; // Clear the input
+                }
+            }
+        }
     };
 
     const triggerFileInput = () => {
@@ -56,34 +77,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImageUrl, onImageU
                         onChange={handleFileChange}
                         className="hidden"
                     />
-                    <button type="button" onClick={triggerFileInput} className="bg-gray-600 hover:bg-gray-500 text-white text-sm font-bold py-2 px-3 rounded w-full text-center">
-                        Upload from Computer
-                    </button>
-                    <button type="button" onClick={() => setIsGalleryOpen(true)} className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-3 rounded w-full text-center">
-                        Choose from Gallery
+                    <button 
+                        type="button" 
+                        onClick={triggerFileInput} 
+                        className="bg-gray-600 hover:bg-gray-500 text-white text-sm font-bold py-2 px-3 rounded w-full text-center"
+                        disabled={isUploading}
+                    >
+                        {isUploading ? 'Uploading...' : 'Upload Photo'}
                     </button>
                 </div>
             </div>
-
-            {isGalleryOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setIsGalleryOpen(false)}>
-                    <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-4xl" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-white mb-4">Select an Image</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
-                            {GALLERY_IMAGES.map(url => (
-                                <div key={url} className="cursor-pointer group" onClick={() => handleGallerySelect(url)}>
-                                    <img src={url} alt="Gallery image" className="w-full h-32 object-cover rounded-md group-hover:ring-4 ring-brand-accent transition" />
-                                </div>
-                            ))}
-                        </div>
-                         <div className="text-right mt-6">
-                            <button type="button" onClick={() => setIsGalleryOpen(false)} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

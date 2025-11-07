@@ -46,4 +46,4 @@ export const checkAdminStatus = async (user: User | null): Promise<boolean> => {
   }
 };
 
-export { auth, db, functions, googleProvider };
+export { app, auth, db, functions, googleProvider };

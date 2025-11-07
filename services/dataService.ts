@@ -32,7 +32,7 @@ export async function initializeData() {
         if (snapshot.empty) {
             console.log(`Populating ${collectionName} with initial data.`);
             for (const item of initialData) {
-                await addDoc(collection(db, collectionName), item);
+                await setDoc(doc(db, collectionName, String(item.id)), item);
             }
         }
     };
@@ -57,7 +57,13 @@ export function getCollection<T extends { id?: string }>(collectionName: string,
     const q = orderField ? query(colRef, orderBy(orderField, 'desc')) : colRef;
 
     return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
+        const items = snapshot.docs.map(doc => {
+            const data = doc.data();
+            // Ensure the 'id' property of the returned object is the Firestore document ID
+            // and remove the 'id' field from the spread data to avoid overwriting.
+            const { id, ...rest } = data; // Destructure 'id' to exclude it from 'rest'
+            return { id: doc.id, ...rest };
+        }) as T[];
         callback(items);
     }, (error) => {
         console.error(`Error getting ${collectionName} collection:`, error);
@@ -65,21 +71,37 @@ export function getCollection<T extends { id?: string }>(collectionName: string,
 }
 
 // Generic add item
-export async function addItem<T extends { id?: string }>(collectionName: string, item: Omit<T, 'id'>): Promise<string> {
-    const docRef = await addDoc(collection(db, collectionName), item);
-    return docRef.id;
+export async function addItem<T extends { id: string | number }>(collectionName: string, item: T): Promise<string> {
+    try {
+        const docId = String(item.id); // Ensure ID is string
+        await setDoc(doc(db, collectionName, docId), item);
+        return docId;
+    } catch (error) {
+        console.error(`dataService: Error adding item to ${collectionName}:`, error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
 }
 
 // Generic update item
 export async function updateItem<T extends { id: string }>(collectionName: string, id: string, updatedItem: Omit<T, 'id'>): Promise<void> {
-    const docRef = doc(db, collectionName, id);
-    await updateDoc(docRef, updatedItem);
+    try {
+        const docRef = doc(db, collectionName, id);
+        await updateDoc(docRef, updatedItem);
+    } catch (error) {
+        console.error(`dataService: Error updating item ${id} in ${collectionName}:`, error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
 }
 
 // Generic delete item
 export async function deleteItem(collectionName: string, id: string): Promise<void> {
-    const docRef = doc(db, collectionName, id);
-    await deleteDoc(docRef);
+    try {
+        const docRef = doc(db, collectionName, id);
+        await deleteDoc(docRef);
+    } catch (error) {
+        console.error(`dataService: Error deleting item ${id} from ${collectionName}:`, error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
 }
 
 // Create a new user in Firestore
