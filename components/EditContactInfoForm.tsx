@@ -3,15 +3,15 @@ import { getDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { COLLECTIONS } from '../services/dataService';
 import ImageUploader from './ImageUploader';
+import { ContactInfo } from '../types';
 
-interface ContactInfo {
-  bookingEmail: string;
-  generalEmail: string;
-  address: string;
-  imageUrl: string;
+interface EditContactInfoFormProps {
+  onFormChange: () => void;
+  onCancel: () => void;
+  onSave: (contactInfo: ContactInfo) => void;
 }
 
-const EditContactInfoForm: React.FC = () => {
+const EditContactInfoForm: React.FC<EditContactInfoFormProps> = ({ onFormChange, onCancel, onSave }) => {
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +50,7 @@ const EditContactInfoForm: React.FC = () => {
       ...prev!,
       [id]: value,
     }));
+    onFormChange();
   };
 
   const handleImageUpload = (url: string) => {
@@ -57,6 +58,7 @@ const EditContactInfoForm: React.FC = () => {
       ...prev!,
       imageUrl: url,
     }));
+    onFormChange();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +73,7 @@ const EditContactInfoForm: React.FC = () => {
       const docRef = doc(db, COLLECTIONS.CONTACT_INFO, 'main');
       await setDoc(docRef, contactInfo);
       setSuccess("Contact information updated successfully!");
+      onSave(contactInfo);
     } catch (err: any) {
       console.error("Error updating contact info:", err);
       setError("Failed to update contact information.");
@@ -124,8 +127,8 @@ const EditContactInfoForm: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Map Image</label>
           <ImageUploader
-            initialImageUrl={contactInfo?.imageUrl}
-            onImageUpload={handleImageUpload}
+            currentImageUrl={contactInfo?.imageUrl}
+            onImageUrlChange={handleImageUpload}
             folder="contact"
           />
           {contactInfo?.imageUrl && (
@@ -136,13 +139,16 @@ const EditContactInfoForm: React.FC = () => {
         </div>
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-4 bg-brand-accent hover:bg-opacity-90 text-brand-green font-bold py-2 px-4 rounded disabled:bg-gray-500 disabled:cursor-not-allowed"
-        >
-          {submitting ? 'Saving...' : 'Save Contact Info'}
-        </button>
+        <div className="flex justify-end space-x-4 pt-4">
+          <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-brand-accent hover:bg-opacity-90 text-brand-green font-bold py-2 px-4 rounded disabled:bg-gray-500 disabled:cursor-not-allowed"
+          >
+            {submitting ? 'Saving...' : 'Save Contact Info'}
+          </button>
+        </div>
       </form>
     </div>
   );

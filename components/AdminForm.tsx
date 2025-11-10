@@ -7,9 +7,10 @@ interface AdminFormProps {
     type: string;
     onSave: (item: any) => void;
     onCancel: () => void;
+    onFormChange: () => void;
 }
 
-const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) => {
+const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel, onFormChange }) => {
     const [formData, setFormData] = useState<any>(item || {});
 
     const toInputDate = (dateString: string | undefined): string => {
@@ -80,10 +81,12 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         }
 
         setFormData({ ...formData, [name]: processedValue });
+        onFormChange();
     };
 
     const handleImageChange = (newUrl: string) => {
         setFormData({ ...formData, imageUrl: newUrl });
+        onFormChange();
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -106,11 +109,13 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         else newItem = '';
         
         setFormData({ ...formData, [fieldName]: [...currentArray, newItem] });
+        onFormChange();
     };
 
     const handleRemoveArrayItem = (index: number, fieldName: 'impactStats' | 'galleryImages' | 'schedule') => {
         const currentArray = formData[fieldName] || [];
         setFormData({ ...formData, [fieldName]: currentArray.filter((_, i) => i !== index) });
+        onFormChange();
     };
 
     const handleArrayItemChange = (
@@ -122,12 +127,14 @@ const AdminForm: React.FC<AdminFormProps> = ({ item, type, onSave, onCancel }) =
         const currentItems = [...(formData[fieldName] || [])];
         currentItems[index] = { ...currentItems[index], [subField]: e.target.value };
         setFormData({ ...formData, [fieldName]: currentItems });
+        onFormChange();
     };
 
     const handleGalleryImageChange = (newUrl: string, index: number) => {
         const currentImages = [...(formData.galleryImages || [])];
         currentImages[index] = newUrl;
         setFormData({ ...formData, galleryImages: currentImages });
+        onFormChange();
     };
 
     const renderCommonFields = (showImageUploader = true) => (

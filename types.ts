@@ -81,3 +81,10 @@ export interface EducationProgram {
     galleryImages: string[];
     schedule: { date: string; topic: string; location: string }[];
 }
+
+export interface ContactInfo {
+    bookingEmail: string;
+    generalEmail: string;
+    address: string;
+    imageUrl: string;
+}

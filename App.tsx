@@ -13,7 +13,6 @@ import ContactPage from './pages/ContactPage';
 import TourDetailPage from './pages/TourDetailPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import AdminPage from './pages/AdminPage';
-import { initializeData } from './services/dataService';
 import EducationProgramDetailPage from './pages/EducationProgramDetailPage';
 import BlogDetailPage from './pages/BlogDetailPage';
 import { auth, checkAdminStatus } from './services/firebase'; // Import checkAdminStatus
@@ -38,10 +37,6 @@ const App: React.FC = () => {
       if (currentUser) {
         const admin = await checkAdminStatus(currentUser);
         setIsAdmin(admin);
-        if (admin) {
-          // Initialize all data (now populates Firestore if empty) only if admin
-          initializeData();
-        }
       } else {
         setIsAdmin(false);
       }

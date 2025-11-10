@@ -6,9 +6,10 @@ interface EditVisionContentFormProps {
   item: VisionContent;
   onSave: (item: VisionContent) => void;
   onCancel: () => void;
+  onFormChange: () => void;
 }
 
-const EditVisionContentForm: React.FC<EditVisionContentFormProps> = ({ item, onSave, onCancel }) => {
+const EditVisionContentForm: React.FC<EditVisionContentFormProps> = ({ item, onSave, onCancel, onFormChange }) => {
   const [formData, setFormData] = useState<VisionContent>(item || {
     id: '',
     title: '',
@@ -20,11 +21,13 @@ const EditVisionContentForm: React.FC<EditVisionContentFormProps> = ({ item, onS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    onFormChange();
   };
 
   const handleImageUploadComplete = (imageUrl: string) => {
     setFormData({ ...formData, imageUrl });
     setIsUploadingImage(false);
+    onFormChange();
   };
 
   const handleSubmit = (e: React.FormEvent) => {

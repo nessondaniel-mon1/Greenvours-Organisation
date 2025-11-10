@@ -11,7 +11,7 @@ interface HomePageProps {
 const HeroSection: React.FC<HomePageProps> = ({ navigate }) => (
   <div className="relative h-[calc(100vh-80px)] min-h-[600px] flex items-center justify-center text-white">
     <div className="absolute inset-0 bg-black opacity-50 z-10"></div>
-    <img src="https://picsum.photos/seed/ughero/1600/900" alt="Inspiring Ugandan landscape" className="absolute inset-0 w-full h-full object-cover"/>
+    <img src="https://via.placeholder.com/1600x900" alt="Inspiring Ugandan landscape" className="absolute inset-0 w-full h-full object-cover"/>
     <div className="relative z-20 text-center p-4">
       <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">Explore with Purpose. Act with Impact.</h1>
       <p className="text-lg md:text-xl max-w-3xl mx-auto mb-8">
@@ -104,13 +104,14 @@ const NewsSection: React.FC<HomePageProps> = ({ navigate }) => {
 };
 
 const HomePage: React.FC<HomePageProps> = ({ navigate }) => {
-  return (
-    <>
-      <HeroSection navigate={navigate} />
-      <PillarsSection navigate={navigate} />
-      <NewsSection navigate={navigate} />
-    </>
-  );
+
+    return (
+        <>
+            <HeroSection navigate={navigate} />
+            <PillarsSection navigate={navigate} />
+            <NewsSection navigate={navigate} />
+        </>
+    );
 };
 
 export default HomePage;

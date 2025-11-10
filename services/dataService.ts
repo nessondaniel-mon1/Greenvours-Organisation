@@ -1,7 +1,6 @@
-import { Tour, NewsArticle, TeamMember, Project, EducationProgram, ReliefProject, HowWeHelpItem, VisionContent } from '../types';
-import { initialTours, initialNews, initialTeamMembers, initialProjects, initialEducationPrograms, initialReliefProjects, initialHowWeHelpItems, initialVisionContent } from '../data';
+import { Tour, NewsArticle, TeamMember, Project, EducationProgram, ReliefProject, HowWeHelpItem, VisionContent, ContactInfo } from '../types';
 import { db, functions } from './firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot, DocumentData, QuerySnapshot, setDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot, DocumentData, QuerySnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
 // Collection names in Firestore
@@ -18,36 +17,6 @@ export const COLLECTIONS = {
     CONTACT_INFO: 'contactInfo',
     PAYMENTS: 'payments',
 };
-
-export async function initializeData() {
-    if (localStorage.getItem('dataInitialized')) {
-        console.log("Data already initialized, skipping.");
-        return;
-    }
-
-    // Check if collections are empty and populate with initial data if needed
-    const checkAndPopulate = async (collectionName: string, initialData: any[]) => {
-        const q = query(collection(db, collectionName));
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-            console.log(`Populating ${collectionName} with initial data.`);
-            for (const item of initialData) {
-                await setDoc(doc(db, collectionName, String(item.id)), item);
-            }
-        }
-    };
-
-    await checkAndPopulate(COLLECTIONS.TOURS, initialTours);
-    await checkAndPopulate(COLLECTIONS.NEWS, initialNews);
-    await checkAndPopulate(COLLECTIONS.TEAM, initialTeamMembers);
-    await checkAndPopulate(COLLECTIONS.PROJECTS, initialProjects);
-    await checkAndPopulate(COLLECTIONS.EDUCATION_PROGRAMS, initialEducationPrograms);
-    await checkAndPopulate(COLLECTIONS.RELIEF_PROJECTS, initialReliefProjects);
-    await checkAndPopulate(COLLECTIONS.HOW_WE_HELP_ITEMS, initialHowWeHelpItems);
-    await checkAndPopulate(COLLECTIONS.VISION_CONTENT, initialVisionContent);
-
-    localStorage.setItem('dataInitialized', 'true');
-}
 
 // Generic Firestore CRUD operations
 
@@ -135,6 +104,32 @@ export const getHowWeHelpItems = (callback: (items: HowWeHelpItem[]) => void) =>
 
 // Vision Content
 export const getVisionContent = (callback: (content: VisionContent[]) => void) => getCollection<VisionContent>(COLLECTIONS.VISION_CONTENT, callback);
+
+// Contact Info
+export async function getContactInfo(): Promise<ContactInfo | null> {
+    try {
+        const docRef = doc(db, COLLECTIONS.CONTACT_INFO, 'main');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data() as ContactInfo;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching contact info:", error);
+        throw error;
+    }
+}
+
+export async function updateContactInfo(info: ContactInfo): Promise<void> {
+    try {
+        const docRef = doc(db, COLLECTIONS.CONTACT_INFO, 'main');
+        await setDoc(docRef, info);
+    } catch (error) {
+        console.error(`dataService: Error updating contact info:`, error);
+        throw error;
+    }
+}
+
 
 const sendNotificationEmailFn = httpsCallable(functions, 'sendNotificationEmail');
 

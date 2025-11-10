@@ -6,9 +6,10 @@ interface EditReliefProjectFormProps {
   item: ReliefProject;
   onSave: (item: ReliefProject) => void;
   onCancel: () => void;
+  onFormChange: () => void;
 }
 
-const EditReliefProjectForm: React.FC<EditReliefProjectFormProps> = ({ item, onSave, onCancel }) => {
+const EditReliefProjectForm: React.FC<EditReliefProjectFormProps> = ({ item, onSave, onCancel, onFormChange }) => {
   const [formData, setFormData] = useState<ReliefProject>(item || {
     id: '',
     title: '',
@@ -22,10 +23,12 @@ const EditReliefProjectForm: React.FC<EditReliefProjectFormProps> = ({ item, onS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    onFormChange();
   };
 
   const handleImageChange = (newUrl: string) => {
     setFormData({ ...formData, imageUrl: newUrl });
+    onFormChange();
   };
 
   const handleSubmit = (e: React.FormEvent) => {

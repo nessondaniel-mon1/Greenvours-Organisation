@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Tour, TeamMember, Project, NewsArticle, EducationProgram, ReliefProject, HowWeHelpItem, VisionContent } from '../types';
+import { Tour, TeamMember, Project, NewsArticle, EducationProgram, ReliefProject, HowWeHelpItem, VisionContent, ContactInfo } from '../types';
 import * as dataService from '../services/dataService';
 import AdminForm from '../components/AdminForm';
 import EditBlogPostForm from '../components/EditBlogPostForm';
@@ -11,7 +11,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
 
 type ContentType = 'tours' | 'team' | 'projects' | 'news' | 'educationPrograms' | 'reliefProjects' | 'howWeHelpItems' | 'visionContent' | 'contactInfo';
-type ContentItem = Tour | TeamMember | Project | NewsArticle | EducationProgram | ReliefProject | HowWeHelpItem | VisionContent;
+type ContentItem = Tour | TeamMember | Project | NewsArticle | EducationProgram | ReliefProject | HowWeHelpItem | VisionContent | ContactInfo;
 
 const AdminPage: React.FC = () => {
     const [tours, setTours] = useState<Tour[]>([]);
@@ -22,6 +22,7 @@ const AdminPage: React.FC = () => {
     const [reliefProjects, setReliefProjects] = useState<ReliefProject[]>([]);
     const [howWeHelpItems, setHowWeHelpItems] = useState<HowWeHelpItem[]>([]);
     const [visionContent, setVisionContent] = useState<VisionContent[]>([]);
+    const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
 
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
     const [editingType, setEditingType] = useState<ContentType | null>(null);
@@ -29,6 +30,8 @@ const AdminPage: React.FC = () => {
     
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<{id: number | string, type: ContentType} | null>(null);
+    const [isCancelConfirmModalOpen, setIsCancelConfirmModalOpen] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
 
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
@@ -43,6 +46,7 @@ const AdminPage: React.FC = () => {
         const unsubReliefProjects = dataService.getReliefProjects(setReliefProjects);
         const unsubHowWeHelpItems = dataService.getHowWeHelpItems(setHowWeHelpItems);
         const unsubVisionContent = dataService.getVisionContent(setVisionContent);
+        dataService.getContactInfo().then(setContactInfo);
 
         return () => {
             unsubTours();
@@ -56,17 +60,65 @@ const AdminPage: React.FC = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (isDirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isDirty]);
+
+    useEffect(() => {
+        const handlePopState = (event: PopStateEvent) => {
+            if (isFormVisible) {
+                closeForm();
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [isFormVisible]);
+
+    const openForm = () => {
+        setIsFormVisible(true);
+        window.history.pushState({ modalOpen: true }, '', window.location.href);
+    };
+
+    const closeForm = () => {
+        setIsFormVisible(false);
+        setEditingItem(null);
+        setEditingType(null);
+        setIsDirty(false);
+        if (window.history.state?.modalOpen) {
+            window.history.back();
+        }
+    };
+
     const handleEdit = (item: ContentItem, type: ContentType) => {
         setEditingItem(item);
         setEditingType(type);
-        setIsFormVisible(true);
+        openForm();
         pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleAddNew = (type: ContentType) => {
-        setEditingItem(null);
-        setEditingType(type);
-        setIsFormVisible(true);
+        if (type === 'contactInfo') {
+            handleEdit(contactInfo as ContactInfo, 'contactInfo');
+        } else {
+            setEditingItem(null);
+            setEditingType(type);
+            openForm();
+        }
         pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
@@ -79,16 +131,37 @@ const AdminPage: React.FC = () => {
         if (!editingType) return;
         
         try {
-            if ('id' in item && item.id) {
+            if (editingType === 'contactInfo') {
+                await dataService.updateContactInfo(item as ContactInfo);
+            } else if ('id' in item && item.id) {
                 await dataService.updateItem(editingType, String(item.id), item as Omit<ContentItem, 'id'>);
             } else {
                 await dataService.addItem(editingType, item);
             }
             showToast('Item saved successfully', 'success');
+            setIsDirty(false);
+            closeForm(); 
         } catch (error) {
-            showToast('Failed to save item', 'error');
+            showToast(`Failed to save item: ${(error as Error).message}`, 'error');
         }
+    };
+
+    const handleCancel = () => {
+        if (isDirty) {
+            setIsCancelConfirmModalOpen(true);
+        } else {
+            closeForm();
+        }
+    };
+
+    const confirmCancel = () => {
         closeForm();
+        setIsDirty(false);
+        setIsCancelConfirmModalOpen(false);
+    };
+
+    const closeCancelConfirmModal = () => {
+        setIsCancelConfirmModalOpen(false);
     };
 
     const closeConfirmModal = () => {
@@ -102,27 +175,21 @@ const AdminPage: React.FC = () => {
                 await dataService.deleteItem(itemToDelete.type, String(itemToDelete.id));
                 showToast('Item deleted successfully', 'success');
             } catch (error) {
-                showToast('Failed to delete item', 'error');
+                showToast(`Failed to delete item: ${(error as Error).message}`, 'error');
             }
             closeConfirmModal();
         }
-    };
-
-    const closeForm = () => {
-        setIsFormVisible(false);
-        setEditingItem(null);
-        setEditingType(null);
     };
 
     const showToast = (message: string, type: 'success' | 'error') => {
         setToast({ message, type });
     };
 
-    const renderList = (items: ContentItem[], type: ContentType) => (
+    const renderList = (items: (ContentItem & { id: string | number })[], type: ContentType) => (
         <ul className="space-y-3">
             {items.map(item => (
                 <li key={item.id} className="bg-gray-700 p-3 rounded-md flex items-center justify-between">
-                    <span className="font-semibold text-white">{'title' in item ? item.title : item.name}</span>
+                    <span className="font-semibold text-white">{'title' in item ? item.title : ('name' in item ? item.name : '')}</span>
                     <div className="space-x-2">
                         <button onClick={() => handleEdit(item, type)} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded">Edit</button>
                         <button onClick={() => handleDelete(item.id, type)} className="bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded">Delete</button>
@@ -152,46 +219,33 @@ const AdminPage: React.FC = () => {
                 message="Are you sure you want to delete this item? This action cannot be undone."
             />
 
+            <ConfirmationModal
+                isOpen={isCancelConfirmModalOpen}
+                onClose={closeCancelConfirmModal}
+                onConfirm={confirmCancel}
+                title="Discard Changes?"
+                message="You have unsaved changes. Are you sure you want to discard them and go back?"
+            />
+
             {isFormVisible && editingType ? (
-                editingType === 'news' ? (
-                    <EditBlogPostForm 
-                        item={editingItem as NewsArticle}
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                    />
-                ) : editingType === 'reliefProjects' ? (
-                    <EditReliefProjectForm
-                        item={editingItem as ReliefProject}
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                    />
-                ) : editingType === 'howWeHelpItems' ? (
-                    <EditHowWeHelpItemForm
-                        item={editingItem as HowWeHelpItem}
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                    />
-                ) : editingType === 'visionContent' ? (
-                    <EditVisionContentForm
-                        item={editingItem as VisionContent}
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                    />
-                ) : editingType === 'contactInfo' ? (
-                    <EditContactInfoForm
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                    />
-                ) : (
-                    <AdminForm 
-                        item={editingItem}
-                        type={editingType}
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                    />
+                React.createElement(
+                    editingType === 'news' ? EditBlogPostForm :
+                    editingType === 'reliefProjects' ? EditReliefProjectForm :
+                    editingType === 'howWeHelpItems' ? EditHowWeHelpItemForm :
+                    editingType === 'visionContent' ? EditVisionContentForm :
+                    editingType === 'contactInfo' ? EditContactInfoForm :
+                    AdminForm,
+                    {
+                        item: editingItem,
+                        type: editingType,
+                        onSave: handleSave,
+                        onCancel: handleCancel,
+                        onFormChange: () => setIsDirty(true)
+                    }
                 )
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
                     <div className="bg-gray-800 p-6 rounded-lg">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-2xl font-bold text-white">Manage Tours</h2>
@@ -271,7 +325,13 @@ const AdminPage: React.FC = () => {
                             <h2 className="text-2xl font-bold text-white">Manage Contact Information</h2>
                             <button onClick={() => handleAddNew('contactInfo')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Edit Contact Info</button>
                         </div>
-                        <p className="text-gray-400">Edit the organization's contact details and map image.</p>
+                        {contactInfo && (
+                             <div className="bg-gray-700 p-3 rounded-md">
+                                <p className="text-white"><span className="font-bold">Booking Email:</span> {contactInfo.bookingEmail}</p>
+                                <p className="text-white"><span className="font-bold">General Email:</span> {contactInfo.generalEmail}</p>
+                                {contactInfo.imageUrl && <img src={contactInfo.imageUrl} alt="Contact" className="mt-2 w-24 h-auto rounded" />}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

@@ -6,9 +6,10 @@ interface EditBlogPostFormProps {
   item: NewsArticle;
   onSave: (item: NewsArticle) => void;
   onCancel: () => void;
+  onFormChange: () => void;
 }
 
-const EditBlogPostForm: React.FC<EditBlogPostFormProps> = ({ item, onSave, onCancel }) => {
+const EditBlogPostForm: React.FC<EditBlogPostFormProps> = ({ item, onSave, onCancel, onFormChange }) => {
   const [formData, setFormData] = useState<NewsArticle>(item || {
     id: '',
     title: '',
@@ -23,26 +24,31 @@ const EditBlogPostForm: React.FC<EditBlogPostFormProps> = ({ item, onSave, onCan
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    onFormChange();
   };
 
   const handleImageChange = (newUrl: string) => {
     setFormData({ ...formData, imageUrl: newUrl });
+    onFormChange();
   };
 
   const handleGalleryImageChange = (newUrl: string, index: number) => {
     const currentImages = [...(formData.galleryImages || [])];
     currentImages[index] = newUrl;
     setFormData({ ...formData, galleryImages: currentImages });
+    onFormChange();
   };
 
   const handleAddGalleryImage = () => {
     const currentImages = [...(formData.galleryImages || [])];
     setFormData({ ...formData, galleryImages: [...currentImages, ''] });
+    onFormChange();
   };
 
   const handleRemoveGalleryImage = (index: number) => {
     const currentImages = [...(formData.galleryImages || [])];
     setFormData({ ...formData, galleryImages: currentImages.filter((_, i) => i !== index) });
+    onFormChange();
   };
 
   const handleSubmit = (e: React.FormEvent) => {

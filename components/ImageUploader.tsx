@@ -3,9 +3,10 @@ import React, { useState, useRef } from 'react';
 interface ImageUploaderProps {
     currentImageUrl: string;
     onImageUrlChange: (newUrl: string) => void;
+    folder?: string;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImageUrl, onImageUrlChange }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImageUrl, onImageUrlChange, folder }) => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -20,6 +21,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImageUrl, onImageU
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        if (folder) {
+            formData.append('folder', folder);
+        }
 
         try {
             const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {

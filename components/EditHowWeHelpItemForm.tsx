@@ -5,9 +5,10 @@ interface EditHowWeHelpItemFormProps {
   item: HowWeHelpItem;
   onSave: (item: HowWeHelpItem) => void;
   onCancel: () => void;
+  onFormChange: () => void;
 }
 
-const EditHowWeHelpItemForm: React.FC<EditHowWeHelpItemFormProps> = ({ item, onSave, onCancel }) => {
+const EditHowWeHelpItemForm: React.FC<EditHowWeHelpItemFormProps> = ({ item, onSave, onCancel, onFormChange }) => {
   const [formData, setFormData] = useState<HowWeHelpItem>(item || {
     id: '',
     title: '',
@@ -17,6 +18,7 @@ const EditHowWeHelpItemForm: React.FC<EditHowWeHelpItemFormProps> = ({ item, onS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    onFormChange();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
